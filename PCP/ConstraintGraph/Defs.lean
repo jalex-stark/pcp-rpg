@@ -22,6 +22,38 @@ import Mathlib.Tactic
 Binary CSP (Constraint Satisfaction Problem), assignments, satisfaction, and UNSAT value.
 
 This file defines the core constraint graph structures used in Dinur's gap amplification proof.
+
+## General Proof Strategy Notes
+
+### Axioms Used
+- `maxSat`: Computes maximum satisfaction fraction (axiom because it's an optimization problem)
+- `maxSat_spec`: States that maxSat is achievable by some assignment and is maximal
+- `EdgeC.decidableEq`: Decidable equality for edges (axiom due to function fields in BinRel)
+
+### Key Lemmas Proved (lines 110-156)
+1. `satFrac_nonneg`, `satFrac_le_one`: Basic bounds on satisfaction fraction
+2. `unsat_bounds`: UNSAT is between 0 and 1
+3. `unsat_zero_iff_satisfiable`: UNSAT = 0 iff there exists a fully satisfying assignment
+
+### Tactics and Lemmas That Work
+- **Division bounds**: `div_nonneg`, `div_le_iff₀` (note: iff₀, not iff) for rationals
+- **Linear arithmetic**: `linarith` for ℚ (NOT `omega`, which only handles Nat/Int)
+- **Cardinality**: `Finset.card_filter_le` for filtered subset bounds
+- **Witness extraction**: `obtain ⟨x, hx⟩ := spec` to extract existential witnesses
+- **Rewriting**: `hσ ▸ lemma` to rewrite with hypothesis before applying lemma
+
+### Pattern for Bounds Proofs
+```lean
+1. unfold definitions
+2. obtain ⟨witness, hwit, hspec⟩ := axiom_spec
+3. establish key inequality using previously proved lemmas
+4. use `linarith` to combine facts and finish
+```
+
+### TODO for Future Work
+- Prove `regular_size_bound`: Needs careful Sym2 cardinality counting
+- Improve `degree` definition (currently may double-count edges)
+- Derive decidability instances properly instead of axiomatizing
 -/
 
 /-- Binary constraint on alphabet α: a decidable subset of α × α. -/
