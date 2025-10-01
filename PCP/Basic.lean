@@ -4,14 +4,18 @@
   Simple theorems for testing the orchestrator system.
 -/
 
-import Mathlib.Data.Nat.Basic
-import Mathlib.Data.List.Basic
 import Mathlib.Tactic
 
 namespace PCP.Basic
 
 -- Simple test theorems for orchestrator
 
+-- These have correct proofs (for testing)
+theorem nat_add_zero_solved (n : ℕ) : n + 0 = n := by simp
+
+theorem nat_zero_add_solved (n : ℕ) : 0 + n = n := by simp
+
+-- These have sorry (for orchestrator to solve)
 theorem nat_add_zero (n : ℕ) : n + 0 = n := by
   sorry
 
