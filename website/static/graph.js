@@ -117,7 +117,7 @@
             node.classed('selected', false);
             // Select this one
             d3.select(event.currentTarget).classed('selected', true);
-            showNodeDetails(d);
+            showNodeDetails(d, data);
         })
         .call(d3.drag()
             .on('start', dragstarted)
@@ -178,61 +178,103 @@
     }
 
     // Show node details in sidebar
-    function showNodeDetails(node) {
+    function showNodeDetails(selectedNode, graphData) {
         const sidebar = d3.select('#sidebar');
         sidebar.classed('empty', false);
 
-        const difficulty = '★'.repeat(node.difficulty || 0) + '☆'.repeat(5 - (node.difficulty || 0));
+        const difficulty = '★'.repeat(selectedNode.difficulty || 0) + '☆'.repeat(5 - (selectedNode.difficulty || 0));
+
+        // Find dependencies (what this node depends on)
+        const dependencies = graphData.edges
+            .filter(e => e.from === selectedNode.id)
+            .map(e => {
+                const targetNode = graphData.nodes.find(n => n.id === e.to);
+                return { edge: e, node: targetNode };
+            })
+            .filter(d => d.node);
+
+        // Find backlinks (what depends on this node)
+        const backlinks = graphData.edges
+            .filter(e => e.to === selectedNode.id)
+            .map(e => {
+                const sourceNode = graphData.nodes.find(n => n.id === e.from);
+                return { edge: e, node: sourceNode };
+            })
+            .filter(d => d.node);
 
         let html = `
-            <h2>${node.name}</h2>
+            <h2>${selectedNode.name}</h2>
             <div class="node-details">
                 <div class="label">Status</div>
                 <div class="value">
-                    <span class="status-badge status-${node.status}">${node.status}</span>
+                    <span class="status-badge status-${selectedNode.status}">${selectedNode.status}</span>
                 </div>
 
                 <div class="label">Type</div>
-                <div class="value">${node.kind}</div>
+                <div class="value">${selectedNode.kind}</div>
 
-                ${node.path ? `
+                ${selectedNode.path ? `
                     <div class="label">File Path</div>
-                    <div class="value"><code>${node.path}</code></div>
+                    <div class="value"><code>${selectedNode.path}</code></div>
                 ` : ''}
 
-                ${node.workPackage ? `
+                ${selectedNode.workPackage ? `
                     <div class="label">Work Package</div>
-                    <div class="value">${node.workPackage} - ${getWorkPackageName(node.workPackage, data)}</div>
+                    <div class="value">${selectedNode.workPackage} - ${getWorkPackageName(selectedNode.workPackage, graphData)}</div>
                 ` : ''}
 
-                ${node.difficulty ? `
+                ${selectedNode.difficulty ? `
                     <div class="label">Difficulty</div>
-                    <div class="value difficulty">${difficulty} (${node.difficulty}/5)</div>
+                    <div class="value difficulty">${difficulty} (${selectedNode.difficulty}/5)</div>
                 ` : ''}
 
-                ${node.estimatedLOC ? `
+                ${selectedNode.estimatedLOC ? `
                     <div class="label">Estimated LOC</div>
-                    <div class="value">${node.estimatedLOC} lines</div>
+                    <div class="value">${selectedNode.estimatedLOC} lines</div>
                 ` : ''}
 
-                ${node.description ? `
+                ${selectedNode.description ? `
                     <div class="label">Description</div>
-                    <div class="value">${node.description}</div>
+                    <div class="value">${selectedNode.description}</div>
                 ` : ''}
 
-                ${node.signature ? `
+                ${selectedNode.signature ? `
                     <div class="label">Lean Signature</div>
-                    <div class="signature">${escapeHtml(node.signature)}</div>
+                    <div class="signature">${escapeHtml(selectedNode.signature)}</div>
                 ` : ''}
 
-                ${node.notes ? `
+                ${dependencies.length > 0 ? `
+                    <div class="label">Dependencies (${dependencies.length})</div>
+                    <div class="value">
+                        ${dependencies.map(d => `
+                            <div class="reference" style="cursor: pointer;" data-node-id="${d.node.id}">
+                                <strong>${d.node.name}</strong>
+                                ${d.edge.type ? `<br><span style="color: #8b949e; font-size: 0.75rem;">${d.edge.type}${d.edge.label ? ': ' + d.edge.label : ''}</span>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                ${backlinks.length > 0 ? `
+                    <div class="label">Required By (${backlinks.length})</div>
+                    <div class="value">
+                        ${backlinks.map(d => `
+                            <div class="reference" style="cursor: pointer;" data-node-id="${d.node.id}">
+                                <strong>${d.node.name}</strong>
+                                ${d.edge.type ? `<br><span style="color: #8b949e; font-size: 0.75rem;">${d.edge.type}${d.edge.label ? ': ' + d.edge.label : ''}</span>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                ${selectedNode.notes ? `
                     <div class="label">Notes</div>
-                    <div class="value">${node.notes}</div>
+                    <div class="value">${selectedNode.notes}</div>
                 ` : ''}
 
-                ${node.references && node.references.length > 0 ? `
+                ${selectedNode.references && selectedNode.references.length > 0 ? `
                     <div class="label">References</div>
-                    ${node.references.map(ref => `
+                    ${selectedNode.references.map(ref => `
                         <div class="reference">
                             <strong>${ref.paper}</strong>
                             ${ref.section ? `<br>§${ref.section}` : ''}
@@ -244,6 +286,25 @@
         `;
 
         sidebar.html(html);
+
+        // Add click handlers for dependency/backlink navigation
+        sidebar.selectAll('[data-node-id]').on('click', function() {
+            const nodeId = d3.select(this).attr('data-node-id');
+            const targetNode = nodes.find(n => n.id === nodeId);
+            if (targetNode) {
+                // Deselect all and select the target
+                node.classed('selected', false);
+                node.filter(d => d.id === nodeId).classed('selected', true);
+                showNodeDetails(targetNode, graphData);
+
+                // Center the view on the target node
+                const scale = d3.zoomTransform(svg.node()).k;
+                svg.transition().duration(750).call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(width / 2, height / 2).scale(scale).translate(-targetNode.x, -targetNode.y)
+                );
+            }
+        });
     }
 
     function getWorkPackageName(id, data) {
@@ -270,5 +331,174 @@
         d3.select('#stat-loc').text(totalLOC.toLocaleString());
         d3.select('#stat-proved').text(total > 0 ? Math.round((proved / total) * 100) + '%' : '0%');
     }
+
+    // Sidebar toggle functionality
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('sidebar');
+    let sidebarOpen = true;
+
+    sidebarToggle.addEventListener('click', () => {
+        sidebarOpen = !sidebarOpen;
+        if (sidebarOpen) {
+            sidebar.classList.remove('collapsed');
+            sidebarToggle.classList.add('sidebar-open');
+            sidebarToggle.textContent = '◀';
+        } else {
+            sidebar.classList.add('collapsed');
+            sidebarToggle.classList.remove('sidebar-open');
+            sidebarToggle.textContent = '▶';
+        }
+    });
+
+    // Zoom controls
+    const zoomIn = document.getElementById('zoom-in');
+    const zoomOut = document.getElementById('zoom-out');
+    const zoomReset = document.getElementById('zoom-reset');
+
+    zoomIn.addEventListener('click', () => {
+        svg.transition().call(zoom.scaleBy, 1.3);
+    });
+
+    zoomOut.addEventListener('click', () => {
+        svg.transition().call(zoom.scaleBy, 0.7);
+    });
+
+    zoomReset.addEventListener('click', () => {
+        svg.transition().call(zoom.transform, d3.zoomIdentity);
+    });
+
+    // Panel minimize functionality
+    const legendMinimize = document.getElementById('legend-minimize');
+    const statsMinimize = document.getElementById('stats-minimize');
+    const legend = document.querySelector('.legend');
+    const stats = document.querySelector('.stats');
+
+    legendMinimize.addEventListener('click', (e) => {
+        e.stopPropagation();
+        legend.classList.toggle('minimized');
+        legendMinimize.textContent = legend.classList.contains('minimized') ? '+' : '−';
+        legendMinimize.title = legend.classList.contains('minimized') ? 'Expand' : 'Minimize';
+    });
+
+    statsMinimize.addEventListener('click', (e) => {
+        e.stopPropagation();
+        stats.classList.toggle('minimized');
+        statsMinimize.textContent = stats.classList.contains('minimized') ? '+' : '−';
+        statsMinimize.title = stats.classList.contains('minimized') ? 'Expand' : 'Minimize';
+    });
+
+    // Make panels draggable
+    function makeDraggable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+        element.onmousedown = dragMouseDown;
+
+        function dragMouseDown(e) {
+            // Don't drag if clicking on buttons
+            if (e.target.tagName === 'BUTTON') return;
+
+            e.preventDefault();
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+        }
+
+        function elementDrag(e) {
+            e.preventDefault();
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+
+            const newTop = element.offsetTop - pos2;
+            const newLeft = element.offsetLeft - pos1;
+
+            element.style.top = newTop + "px";
+            element.style.left = newLeft + "px";
+            element.style.right = "auto";
+            element.style.bottom = "auto";
+        }
+
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    }
+
+    makeDraggable(legend);
+    makeDraggable(stats);
+
+    // Search functionality
+    const searchInput = document.getElementById('search-input');
+    let searchActive = false;
+
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase().trim();
+
+        if (searchTerm === '') {
+            // Reset all nodes
+            searchActive = false;
+            node.attr('opacity', 1)
+                .attr('stroke-width', 2)
+                .attr('r', d => {
+                    if (d.kind === 'module') return 18;
+                    if (d.kind === 'theorem') return 14;
+                    return 12;
+                });
+            labels.attr('opacity', 1)
+                .attr('font-weight', 'normal');
+            link.attr('stroke-opacity', 0.4);
+            return;
+        }
+
+        searchActive = true;
+
+        // Find matching nodes
+        const matches = nodes.filter(n =>
+            n.name.toLowerCase().includes(searchTerm) ||
+            (n.description && n.description.toLowerCase().includes(searchTerm)) ||
+            (n.signature && n.signature.toLowerCase().includes(searchTerm)) ||
+            (n.id && n.id.toLowerCase().includes(searchTerm))
+        );
+
+        const matchIds = new Set(matches.map(m => m.id));
+
+        // Highlight matches, dim others
+        node.attr('opacity', d => matchIds.has(d.id) ? 1 : 0.15)
+            .attr('stroke-width', d => matchIds.has(d.id) ? 4 : 2)
+            .attr('r', d => {
+                const baseSize = d.kind === 'module' ? 18 : (d.kind === 'theorem' ? 14 : 12);
+                return matchIds.has(d.id) ? baseSize + 4 : baseSize;
+            });
+
+        labels.attr('opacity', d => matchIds.has(d.id) ? 1 : 0.15)
+            .attr('font-weight', d => matchIds.has(d.id) ? 'bold' : 'normal');
+
+        // Dim edges unless they connect matched nodes
+        link.attr('stroke-opacity', d => {
+            const sourceId = typeof d.source === 'object' ? d.source.id : d.source;
+            const targetId = typeof d.target === 'object' ? d.target.id : d.target;
+            const sourceMatch = matchIds.has(sourceId);
+            const targetMatch = matchIds.has(targetId);
+            return (sourceMatch || targetMatch) ? 0.6 : 0.05;
+        });
+
+        // If exactly one match, select it
+        if (matches.length === 1) {
+            node.classed('selected', false);
+            node.filter(d => d.id === matches[0].id).classed('selected', true);
+            showNodeDetails(matches[0], data);
+        }
+    });
+
+    // Clear search on Escape
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.blur();
+        }
+    });
 
 })();

@@ -139,6 +139,18 @@
             margin-top: 0.5rem;
             font-size: 0.875rem;
             border-left: 3px solid #58a6ff;
+            transition: all 0.2s;
+        }
+
+        .reference[data-node-id] {
+            cursor: pointer;
+            border-left-color: #8b949e;
+        }
+
+        .reference[data-node-id]:hover {
+            background: #161b22;
+            border-left-color: #58a6ff;
+            transform: translateX(4px);
         }
 
         /* Graph styles */
@@ -373,11 +385,31 @@
         <div class="subtitle">Repository Planning Graph - Interactive Dependency Visualization</div>
     </header>
 
+    <!-- Sidebar toggle -->
+    <div id="sidebar-toggle" class="sidebar-open" title="Toggle sidebar">
+        ◀
+    </div>
+
     <div class="container">
         <div id="graph-container">
             <svg id="graph"></svg>
 
+            <!-- Search bar -->
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search nodes...">
+            </div>
+
+            <!-- Zoom controls -->
+            <div class="zoom-controls">
+                <button class="zoom-btn" id="zoom-in" title="Zoom in">+</button>
+                <button class="zoom-btn" id="zoom-reset" title="Reset zoom">⊙</button>
+                <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+            </div>
+
             <div class="legend">
+                <div class="panel-controls">
+                    <button class="control-btn" id="legend-minimize" title="Minimize">−</button>
+                </div>
                 <strong>Node Status</strong>
                 <div class="legend-item">
                     <div class="legend-color" style="background: #1f6feb;"></div>
@@ -412,6 +444,9 @@
             </div>
 
             <div class="stats">
+                <div class="panel-controls">
+                    <button class="control-btn" id="stats-minimize" title="Minimize">−</button>
+                </div>
                 <h3>Progress Overview</h3>
                 <div class="stat-item">
                     <span class="stat-label">Total Nodes:</span>
