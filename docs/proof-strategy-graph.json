@@ -1,0 +1,230 @@
+{
+  "$schema": "proof-strategy-schema.json",
+  "version": "0.1.0",
+  "description": "Knowledge graph linking proof goals, tactics, and common patterns",
+
+  "tactics": {
+    "linarith": {
+      "id": "tactic:linarith",
+      "name": "linarith",
+      "description": "Linear arithmetic solver for ordered rings",
+      "works_with_types": ["ℚ", "ℝ", "Int", "any LinearOrderedCommRing"],
+      "does_not_work_with": [],
+      "typical_usage": "After establishing key inequalities, use to combine facts",
+      "references": [
+        "https://leanprover-community.github.io/mathlib4_docs/Mathlib/Tactic/Linarith/Frontend.html"
+      ],
+      "examples": ["PCP/ConstraintGraph/Defs.lean:135", "PCP/ConstraintGraph/Defs.lean:149"]
+    },
+    "omega": {
+      "id": "tactic:omega",
+      "name": "omega",
+      "description": "Decision procedure for linear arithmetic",
+      "works_with_types": ["Nat", "Int"],
+      "does_not_work_with": ["ℚ", "ℝ", "rationals"],
+      "typical_usage": "Natural number and integer arithmetic",
+      "common_mistake": "Trying to use with rationals (use linarith instead)",
+      "references": [
+        "https://leanprover-community.github.io/mathlib4_docs/Lean/Elab/Tactic/Omega.html"
+      ]
+    },
+    "div_le_iff₀": {
+      "id": "lemma:div_le_iff₀",
+      "name": "div_le_iff₀",
+      "description": "Transforms a/b ≤ c into a ≤ b*c when b > 0",
+      "works_with_types": ["ℚ", "ℝ", "DivisionRing with LinearOrder"],
+      "prerequisites": ["proof that denominator > 0"],
+      "typical_usage": "Division inequalities with rationals",
+      "common_mistake": "Using div_le_iff instead of div_le_iff₀",
+      "note": "The ₀ subscript indicates it's for division rings with possible zero",
+      "examples": ["PCP/ConstraintGraph/Defs.lean:124"]
+    },
+    "obtain": {
+      "id": "tactic:obtain",
+      "name": "obtain",
+      "description": "Extract witnesses from existential statements",
+      "typical_usage": "obtain ⟨x, hx⟩ := spec",
+      "pattern": "Destructure existential into named witnesses",
+      "examples": ["PCP/ConstraintGraph/Defs.lean:131", "PCP/ConstraintGraph/Defs.lean:147"]
+    },
+    "simp": {
+      "id": "tactic:simp",
+      "name": "simp",
+      "description": "Simplification using simp lemmas",
+      "typical_usage": "Simplify goals, especially with axiomatized instances",
+      "when_to_prefer_over_decide": "With axiomatized DecidableEq or complex computations",
+      "examples": ["PCP/ConstraintGraph/Examples.lean:53"]
+    }
+  },
+
+  "patterns": {
+    "bounds_proof": {
+      "id": "pattern:bounds_proof",
+      "name": "Bounds Proof Pattern",
+      "description": "Prove a ≤ x ≤ b for some computed value x",
+      "steps": [
+        "unfold definitions",
+        "obtain witnesses from specifications",
+        "establish key inequality using prior lemmas",
+        "use linarith to finish"
+      ],
+      "tactics_used": ["unfold", "obtain", "linarith", "hσ ▸"],
+      "examples": [
+        "PCP/ConstraintGraph/Defs.lean:128-138",
+        "PCP/ConstraintGraph/Defs.lean:141-156"
+      ]
+    },
+    "division_inequality": {
+      "id": "pattern:division_inequality",
+      "name": "Division Inequality Pattern",
+      "description": "Prove a/b ≤ c for rationals",
+      "steps": [
+        "prove b > 0",
+        "use div_le_iff₀ to transform",
+        "prove transformed goal"
+      ],
+      "tactics_used": ["div_le_iff₀", "simp", "linarith"],
+      "examples": ["PCP/ConstraintGraph/Defs.lean:117-125"]
+    },
+    "finset_construction": {
+      "id": "pattern:finset_construction",
+      "name": "Finset Construction Pattern",
+      "description": "Build Finset from list of elements",
+      "steps": [
+        "define elements",
+        "use List.toFinset",
+        "mark definition noncomputable if needed",
+        "prove nonempty with simp"
+      ],
+      "requires": ["DecidableEq instance"],
+      "workaround_if_missing": "Axiomatize DecidableEq",
+      "examples": ["PCP/ConstraintGraph/Examples.lean:51-53"]
+    }
+  },
+
+  "common_errors": {
+    "omega_with_rationals": {
+      "id": "error:omega_rationals",
+      "error_message": "omega could not prove the goal: No usable constraints found",
+      "description": "omega tactic doesn't support rational arithmetic",
+      "solution": "Use linarith instead",
+      "affected_tactics": ["omega"],
+      "references": ["tactic:linarith"]
+    },
+    "div_le_iff_not_found": {
+      "id": "error:div_le_iff",
+      "error_message": "Unknown identifier `div_le_iff`",
+      "description": "Wrong lemma name for rational division",
+      "solution": "Use div_le_iff₀ (with subscript zero)",
+      "affected_tactics": ["div_le_iff"],
+      "references": ["lemma:div_le_iff₀"]
+    },
+    "decidable_eq_missing": {
+      "id": "error:decidable_eq",
+      "error_message": "failed to synthesize DecidableEq",
+      "description": "Type needs decidable equality for Finset operations",
+      "solutions": [
+        "Add DecidableEq instance",
+        "Axiomatize DecidableEq if type contains functions",
+        "Mark definition as noncomputable"
+      ],
+      "references": ["pattern:finset_construction"]
+    },
+    "decide_with_axioms": {
+      "id": "error:decide_axioms",
+      "error_message": "Tactic `decide` failed ... did not reduce to `isTrue` or `isFalse`",
+      "description": "decide tactic can't compute with axiomatized instances",
+      "solution": "Use simp instead of decide",
+      "affected_tactics": ["decide"],
+      "references": ["tactic:simp"]
+    }
+  },
+
+  "goal_to_tactic": {
+    "rational_inequality": {
+      "id": "goal:rational_inequality",
+      "pattern": "Goal involves ℚ with ≤, <, ≥, >",
+      "recommended_tactics": ["linarith", "div_le_iff₀"],
+      "not_recommended": ["omega"],
+      "examples": ["pattern:bounds_proof"]
+    },
+    "natural_number_inequality": {
+      "id": "goal:nat_inequality",
+      "pattern": "Goal involves Nat with ≤, <",
+      "recommended_tactics": ["omega", "linarith"],
+      "examples": []
+    },
+    "division_bound": {
+      "id": "goal:division_bound",
+      "pattern": "Goal is a/b ≤ c or c ≤ a/b",
+      "recommended_tactics": ["div_le_iff₀", "div_nonneg"],
+      "references": ["pattern:division_inequality"]
+    },
+    "construct_finset": {
+      "id": "goal:construct_finset",
+      "pattern": "Need to build Finset from explicit elements",
+      "recommended_tactics": ["List.toFinset", "noncomputable"],
+      "references": ["pattern:finset_construction"]
+    }
+  },
+
+  "definition_requirements": {
+    "BinaryCSP": {
+      "id": "def:BinaryCSP",
+      "requires_instances": ["Fintype V", "Fintype α"],
+      "optional_instances": ["DecidableEq V"],
+      "can_be_noncomputable": true,
+      "examples": ["PCP/ConstraintGraph/Examples.lean:51"]
+    },
+    "EdgeC": {
+      "id": "def:EdgeC",
+      "requires_instances": [],
+      "for_finset_operations": ["DecidableEq"],
+      "workaround": "Axiomatize DecidableEq if contains functions",
+      "location": "PCP/ConstraintGraph/Defs.lean:44"
+    }
+  },
+
+  "lemma_dependencies": {
+    "satFrac_nonneg": {
+      "id": "lemma:satFrac_nonneg",
+      "location": "PCP/ConstraintGraph/Defs.lean:110-114",
+      "uses_tactics": ["div_nonneg", "simp"],
+      "used_by": ["lemma:unsat_bounds"]
+    },
+    "satFrac_le_one": {
+      "id": "lemma:satFrac_le_one",
+      "location": "PCP/ConstraintGraph/Defs.lean:117-125",
+      "uses_lemmas": ["Finset.card_filter_le"],
+      "uses_tactics": ["div_le_iff₀", "simp"],
+      "used_by": ["lemma:unsat_bounds", "lemma:unsat_zero_iff_satisfiable"]
+    },
+    "unsat_bounds": {
+      "id": "lemma:unsat_bounds",
+      "location": "PCP/ConstraintGraph/Defs.lean:127-138",
+      "depends_on": ["lemma:satFrac_nonneg", "lemma:satFrac_le_one"],
+      "uses_tactics": ["obtain", "linarith"],
+      "pattern": "pattern:bounds_proof"
+    }
+  },
+
+  "web_resources": {
+    "linarith_docs": {
+      "url": "https://leanprover-community.github.io/mathlib4_docs/Mathlib/Tactic/Linarith/Frontend.html",
+      "description": "Mathlib4 documentation for linarith tactic"
+    },
+    "mathematics_in_lean": {
+      "url": "https://leanprover-community.github.io/mathematics_in_lean/",
+      "description": "Tutorial covering tactics and patterns",
+      "relevant_chapters": ["Basics", "Number Theory"]
+    },
+    "zulip_chat": {
+      "url": "https://leanprover.zulipchat.com",
+      "description": "Lean community chat - search for specific tactics/errors"
+    },
+    "tactics_reference": {
+      "url": "https://lean-lang.org/doc/reference/latest/Tactic-Proofs/Tactic-Reference/",
+      "description": "Official Lean 4 tactics reference"
+    }
+  }
+}

@@ -1,0 +1,272 @@
+/* ========== Dark Mode PCP Blueprint Styling ========== */
+
+:root {
+  --primary: #60a5fa;
+  --primary-dark: #3b82f6;
+  --success: #34d399;
+  --bg-dark: #0f172a;
+  --bg-darker: #020617;
+  --bg-card: #1e293b;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-light: #94a3b8;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  line-height: 1.7 !important;
+  color: var(--text) !important;
+  background: var(--bg-dark) !important;
+}
+
+div.wrapper {
+  background: var(--bg-dark) !important;
+}
+
+/* Header improvements */
+.titlepage {
+  background: linear-gradient(135deg, #1e40af 0%, #0c1e4d 100%) !important;
+  color: white !important;
+  padding: 4rem 2rem !important;
+  margin: -1rem -1rem 3rem -1rem !important;
+  border-radius: 0 0 12px 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+.titlepage h1 {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 1rem !important;
+  color: white !important;
+}
+
+.titlepage .authors,
+.titlepage .date {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 1.1rem !important;
+}
+
+/* Theorem environments */
+div[class$="_thmwrapper"] {
+  background: var(--bg-card) !important;
+  border-left: 4px solid var(--primary) !important;
+  padding: 1.5rem !important;
+  margin: 1.5rem 0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+div[class$="_thmheading"] {
+  font-weight: 600 !important;
+  color: var(--primary) !important;
+  margin-bottom: 0.5rem !important;
+  font-size: 1.1rem !important;
+}
+
+div[class$="_thmcontent"] {
+  color: var(--text) !important;
+}
+
+/* Code blocks */
+pre, code, pre.verbatim {
+  background: #0c1420 !important;
+  color: #e2e8f0 !important;
+  border-radius: 6px !important;
+  padding: 1rem !important;
+  overflow-x: auto;
+  font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  margin: 1rem 0 !important;
+  border: 1px solid var(--border) !important;
+}
+
+code {
+  padding: 0.2rem 0.4rem !important;
+  font-size: 0.875rem !important;
+  background: #0c1420 !important;
+  color: #e2e8f0 !important;
+  border-radius: 3px !important;
+}
+
+/* Navigation improvements */
+nav.toc {
+  background: var(--bg-darker) !important;
+  border-right: 1px solid var(--border) !important;
+  padding: 2rem 1rem !important;
+}
+
+nav.toc a {
+  color: var(--text) !important;
+  text-decoration: none !important;
+  padding: 0.5rem 1rem !important;
+  display: block !important;
+  border-radius: 6px !important;
+  transition: all 0.2s !important;
+}
+
+nav.toc a:hover {
+  background: var(--bg-card) !important;
+  color: var(--primary) !important;
+  transform: translateX(4px);
+}
+
+nav.toc .toc_ref {
+  font-weight: 600 !important;
+  color: var(--primary) !important;
+  margin-right: 0.5rem !important;
+}
+
+nav.toc li {
+  background-color: transparent !important;
+}
+
+nav.toc li.current {
+  background-color: var(--bg-card) !important;
+}
+
+/* Chapter headings */
+h1 {
+  font-size: 2rem !important;
+  border-bottom: 2px solid var(--border) !important;
+  padding-bottom: 0.5rem !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+}
+
+h2 {
+  font-size: 1.5rem !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+h3, h4, h5, h6 {
+  color: var(--text) !important;
+  font-weight: 600 !important;
+}
+
+/* Paragraphs and text */
+p {
+  color: var(--text) !important;
+}
+
+/* Content area */
+.content {
+  max-width: 900px !important;
+  padding: 2rem !important;
+  background: var(--bg-dark) !important;
+}
+
+.content-wrapper {
+  background: var(--bg-dark) !important;
+}
+
+/* Links */
+a {
+  color: var(--primary) !important;
+  text-decoration: none !important;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--primary-dark) !important;
+  text-decoration: underline !important;
+}
+
+/* Lists */
+ul.itemize li,
+ol.enumerate li {
+  color: var(--text) !important;
+}
+
+/* Meta information */
+.lean-path {
+  font-family: 'SF Mono', Monaco, monospace !important;
+  font-size: 0.875rem !important;
+  color: var(--text-light) !important;
+  background: var(--bg-card) !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 4px !important;
+  display: inline-block !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* Header bar */
+body > header {
+  background: var(--bg-darker) !important;
+  color: white !important;
+  padding: 1rem !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+body > header h1 {
+  color: white !important;
+  border: none !important;
+  margin: 0 !important;
+}
+
+body > header svg {
+  color: white !important;
+}
+
+/* Bottom navigation */
+nav.prev_up_next {
+  background: var(--bg-darker) !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+nav.prev_up_next a {
+  color: var(--primary) !important;
+}
+
+nav.prev_up_next svg {
+  color: var(--primary) !important;
+}
+
+/* Tables */
+table {
+  background: var(--bg-card) !important;
+  color: var(--text) !important;
+}
+
+.tabular {
+  background-color: var(--bg-card) !important;
+  color: var(--text) !important;
+}
+
+/* Description lists */
+dl.description dt {
+  color: var(--text) !important;
+}
+
+dl.description dd {
+  color: var(--text) !important;
+}
+
+/* Equations */
+div.displaymath,
+div.equation {
+  color: var(--text) !important;
+}
+
+/* Selection */
+::selection {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+::-moz-selection {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .titlepage h1 {
+    font-size: 1.75rem !important;
+  }
+
+  .content {
+    padding: 1rem !important;
+  }
+}

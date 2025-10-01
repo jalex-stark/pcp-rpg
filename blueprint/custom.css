@@ -1,0 +1,185 @@
+/* Custom styling for PCP Blueprint */
+
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1e40af;
+  --success: #10b981;
+  --bg-light: #f8fafc;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-light: #64748b;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: #ffffff;
+}
+
+/* Header improvements */
+.titlepage {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  padding: 4rem 2rem;
+  margin: -1rem -1rem 3rem -1rem;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.titlepage h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.titlepage .authors,
+.titlepage .date {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+}
+
+/* Theorem environments */
+.theorem, .lemma, .definition {
+  background: var(--bg-light);
+  border-left: 4px solid var(--primary);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.theorem .head, .lemma .head, .definition .head {
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* Code blocks */
+pre, code, .lstlisting {
+  background: #1e293b;
+  color: #e2e8f0;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-family: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 1rem 0;
+}
+
+code {
+  padding: 0.2rem 0.4rem;
+  font-size: 0.875rem;
+}
+
+/* Navigation */
+nav.toc {
+  background: var(--bg-light);
+  border-right: 1px solid var(--border);
+  padding: 2rem 1rem;
+}
+
+nav.toc a {
+  color: var(--text);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  display: block;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+nav.toc a:hover {
+  background: white;
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+nav.toc .toc_ref {
+  font-weight: 600;
+  color: var(--primary);
+  margin-right: 0.5rem;
+}
+
+/* Chapter headings */
+h1, h2, h3 {
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-size: 2rem;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+h3 {
+  font-size: 1.25rem;
+}
+
+/* Content area */
+.content {
+  max-width: 900px;
+  padding: 2rem;
+}
+
+/* Links */
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* Checkmarks for completed items */
+.leanok::before {
+  content: '✓';
+  color: var(--success);
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+/* Status indicators */
+.status-planned {
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.status-proved {
+  color: var(--success);
+  font-weight: 600;
+}
+
+/* Meta information */
+.lean-path {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 0.875rem;
+  color: var(--text-light);
+  background: var(--bg-light);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .titlepage h1 {
+    font-size: 1.75rem;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+}

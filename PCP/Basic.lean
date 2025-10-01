@@ -1,5 +1,33 @@
-import Mathlib.Data.Nat.Prime.Basic
+/-
+  Basic definitions and helper lemmas for PCP formalization.
 
--- Verify mathlib4 is working
-#check Nat.Prime
-#check Nat.prime_iff
+  Simple theorems for testing the orchestrator system.
+-/
+
+import Mathlib.Data.Nat.Basic
+import Mathlib.Data.List.Basic
+import Mathlib.Tactic
+
+namespace PCP.Basic
+
+-- Simple test theorems for orchestrator
+
+theorem nat_add_zero (n : ℕ) : n + 0 = n := by
+  sorry
+
+theorem nat_zero_add (n : ℕ) : 0 + n = n := by
+  sorry
+
+theorem nat_add_comm (m n : ℕ) : m + n = n + m := by
+  sorry
+
+theorem nat_mul_one (n : ℕ) : n * 1 = n := by
+  sorry
+
+theorem list_append_nil {α : Type*} (l : List α) : l ++ [] = l := by
+  sorry
+
+theorem list_nil_append {α : Type*} (l : List α) : [] ++ l = l := by
+  sorry
+
+end PCP.Basic

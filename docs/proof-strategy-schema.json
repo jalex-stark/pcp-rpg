@@ -1,0 +1,136 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Proof Strategy Knowledge Graph",
+  "description": "Schema for encoding proof strategies, tactics, patterns, and their relationships",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version"
+    },
+    "description": {
+      "type": "string"
+    },
+    "tactics": {
+      "type": "object",
+      "description": "Individual tactics and lemmas with their properties",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "name", "description"],
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "works_with_types": {"type": "array", "items": {"type": "string"}},
+          "does_not_work_with": {"type": "array", "items": {"type": "string"}},
+          "typical_usage": {"type": "string"},
+          "prerequisites": {"type": "array", "items": {"type": "string"}},
+          "common_mistake": {"type": "string"},
+          "note": {"type": "string"},
+          "references": {"type": "array", "items": {"type": "string"}},
+          "examples": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "patterns": {
+      "type": "object",
+      "description": "Common proof patterns with step-by-step guidance",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "name", "description", "steps"],
+        "properties": {
+          "id": {"type": "string"},
+          "name": {"type": "string"},
+          "description": {"type": "string"},
+          "steps": {"type": "array", "items": {"type": "string"}},
+          "tactics_used": {"type": "array", "items": {"type": "string"}},
+          "requires": {"type": "array", "items": {"type": "string"}},
+          "workaround_if_missing": {"type": "string"},
+          "examples": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "common_errors": {
+      "type": "object",
+      "description": "Common errors and their solutions",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "description", "solution"],
+        "properties": {
+          "id": {"type": "string"},
+          "error_message": {"type": "string"},
+          "description": {"type": "string"},
+          "solution": {"type": "string"},
+          "solutions": {"type": "array", "items": {"type": "string"}},
+          "affected_tactics": {"type": "array", "items": {"type": "string"}},
+          "references": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "goal_to_tactic": {
+      "type": "object",
+      "description": "Maps goal patterns to recommended tactics",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "pattern", "recommended_tactics"],
+        "properties": {
+          "id": {"type": "string"},
+          "pattern": {"type": "string"},
+          "recommended_tactics": {"type": "array", "items": {"type": "string"}},
+          "not_recommended": {"type": "array", "items": {"type": "string"}},
+          "references": {"type": "array", "items": {"type": "string"}},
+          "examples": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "definition_requirements": {
+      "type": "object",
+      "description": "Type class requirements for definitions",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {"type": "string"},
+          "requires_instances": {"type": "array", "items": {"type": "string"}},
+          "optional_instances": {"type": "array", "items": {"type": "string"}},
+          "for_finset_operations": {"type": "array", "items": {"type": "string"}},
+          "can_be_noncomputable": {"type": "boolean"},
+          "workaround": {"type": "string"},
+          "location": {"type": "string"},
+          "examples": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    },
+    "lemma_dependencies": {
+      "type": "object",
+      "description": "Dependency graph between lemmas",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id", "location"],
+        "properties": {
+          "id": {"type": "string"},
+          "location": {"type": "string"},
+          "uses_tactics": {"type": "array", "items": {"type": "string"}},
+          "uses_lemmas": {"type": "array", "items": {"type": "string"}},
+          "depends_on": {"type": "array", "items": {"type": "string"}},
+          "used_by": {"type": "array", "items": {"type": "string"}},
+          "pattern": {"type": "string"}
+        }
+      }
+    },
+    "web_resources": {
+      "type": "object",
+      "description": "External documentation and resources",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["url", "description"],
+        "properties": {
+          "url": {"type": "string", "format": "uri"},
+          "description": {"type": "string"},
+          "relevant_chapters": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  },
+  "required": ["version", "tactics", "patterns", "common_errors", "goal_to_tactic"]
+}

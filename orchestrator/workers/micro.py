@@ -5,19 +5,36 @@ Profile 0 baseline - deterministic, no ML dependencies.
 """
 
 import asyncio
-import random
+from typing import Optional
 from ..scheduler import Goal, Result, StrategyType
+from .dojo import DojoWrapper
+
+
+# Global dojo instance cache
+_dojo: Optional[DojoWrapper] = None
+
+
+async def get_dojo() -> DojoWrapper:
+    """Get or create the global DojoWrapper instance."""
+    global _dojo
+    if _dojo is None:
+        _dojo = DojoWrapper()
+    return _dojo
 
 
 async def run_micro(goal: Goal, timeout: float = 8.0) -> Result:
     """
     Run quick tactic enumeration (simp, rw, aesop, ring, linarith).
 
-    This is a stub implementation. In production, this would:
-    1. Use LeanDojo to execute tactics
-    2. Try common patterns: simp_all, aesop?, ring, omega, linarith
-    3. Cache successful tactic templates
-    4. Return normalized proof scripts
+    Tries deterministic tactics in sequence using LeanDojo:
+    - rfl (reflexivity)
+    - simp (simplifier)
+    - simp [*] (with hypotheses)
+    - aesop (automation)
+    - ring (ring normalization)
+    - omega (linear arithmetic)
+    - linarith (linear arithmetic)
+    - decide (decision procedures)
 
     Args:
         goal: Goal to solve
@@ -26,64 +43,62 @@ async def run_micro(goal: Goal, timeout: float = 8.0) -> Result:
     Returns:
         Result with success status and tactics used
     """
-    start = asyncio.get_event_loop().time()
+    start_time = asyncio.get_event_loop().time()
 
-    # Simulate micro-tactic search
-    await asyncio.sleep(min(0.1 + random.random() * 0.3, timeout))
+    # Tactics to try in order (fast → slower)
+    tactics_to_try = [
+        "rfl",
+        "simp",
+        "simp [*]",
+        "aesop",
+        "ring",
+        "omega",
+        "linarith",
+        "decide",
+        "simp_all; aesop",
+    ]
 
-    elapsed = asyncio.get_event_loop().time() - start
+    dojo = await get_dojo()
+    per_tactic_timeout = timeout / len(tactics_to_try)
 
-    # Stub: simulate success for easy goals
-    difficulty = goal.estimated_difficulty
-    success_prob = max(0.1, 0.8 - difficulty)
+    for tactic in tactics_to_try:
+        # Check global timeout
+        elapsed = asyncio.get_event_loop().time() - start_time
+        if elapsed >= timeout:
+            break
 
-    success = random.random() < success_prob
+        try:
+            result = await asyncio.wait_for(
+                dojo.run_tac(
+                    theorem_file=goal.metadata.get("file_path", ""),
+                    theorem_name=goal.id,
+                    state=0,  # Initial state
+                    tactic=tactic,
+                    tactic_timeout=per_tactic_timeout,
+                ),
+                timeout=per_tactic_timeout,
+            )
 
-    if success:
-        # Simulate finding a short tactic sequence
-        tactics = ["simp [*]", "aesop"]
-        return Result(
-            success=True,
-            strategy=StrategyType.MICRO,
-            tactics=tactics,
-            time_seconds=elapsed,
-        )
-    else:
-        return Result(
-            success=False,
-            strategy=StrategyType.MICRO,
-            tactics=[],
-            time_seconds=elapsed,
-            error="No micro-tactic succeeded",
-        )
+            if result.success:
+                elapsed = asyncio.get_event_loop().time() - start_time
+                return Result(
+                    success=True,
+                    strategy=StrategyType.MICRO,
+                    tactics=[tactic],
+                    time_seconds=elapsed,
+                )
 
+        except asyncio.TimeoutError:
+            continue
+        except Exception as e:
+            # Log error but continue trying other tactics
+            continue
 
-# For integration: real implementation would look like:
-# async def run_micro_real(goal: Goal, dojo, timeout: float = 8.0) -> Result:
-#     """Real implementation using LeanDojo."""
-#     tactics_to_try = [
-#         "simp_all",
-#         "aesop?",
-#         "ring",
-#         "omega",
-#         "linarith",
-#         "simp [*]; aesop",
-#     ]
-#
-#     for tactic in tactics_to_try:
-#         try:
-#             result = await asyncio.wait_for(
-#                 dojo.run_tac(goal.id, tactic),
-#                 timeout=timeout / len(tactics_to_try)
-#             )
-#             if result.success:
-#                 return Result(
-#                     success=True,
-#                     strategy=StrategyType.MICRO,
-#                     tactics=[tactic],
-#                     ...
-#                 )
-#         except asyncio.TimeoutError:
-#             continue
-#
-#     return Result(success=False, ...)
+    elapsed = asyncio.get_event_loop().time() - start_time
+    return Result(
+        success=False,
+        strategy=StrategyType.MICRO,
+        tactics=[],
+        time_seconds=elapsed,
+        error="No micro-tactic succeeded",
+    )

@@ -5,26 +5,37 @@ Profile 1+ - requires Lean Copilot in lakefile.
 """
 
 import asyncio
-import random
+from typing import Optional
 from ..scheduler import Goal, Result, StrategyType
+from .dojo import DojoWrapper
+
+
+# Global dojo instance cache
+_dojo: Optional[DojoWrapper] = None
+
+
+async def get_dojo() -> DojoWrapper:
+    """Get or create the global DojoWrapper instance."""
+    global _dojo
+    if _dojo is None:
+        _dojo = DojoWrapper()
+    return _dojo
 
 
 async def run_copilot(goal: Goal, timeout: float = 20.0) -> Result:
     """
     Run Lean Copilot search (select_premises + search_proof).
 
-    This is a stub implementation. In production, this would:
-    1. Use LeanDojo to invoke Copilot tactics inside Lean
-    2. Call select_premises to get top-k relevant lemmas
-    3. Call search_proof with Aesop + LLM suggestions
-    4. Replay found proof script and verify
-    5. Return normalized proof
+    Uses LeanDojo to invoke Copilot tactics:
+    1. Call select_premises to get top-k relevant lemmas
+    2. Call search_proof with Aesop + LLM suggestions
+    3. Return normalized proof script
 
-    Configuration (to be wired):
+    Configuration:
     - beam: 4
     - temperature: 0.2
     - max_steps: 20
-    - Aesop: bestFirst, maxRuleApplications=80
+    - premises: 12
 
     Args:
         goal: Goal to solve
@@ -33,67 +44,92 @@ async def run_copilot(goal: Goal, timeout: float = 20.0) -> Result:
     Returns:
         Result with proof script if found
     """
-    start = asyncio.get_event_loop().time()
+    start_time = asyncio.get_event_loop().time()
+    dojo = await get_dojo()
 
-    # Simulate Copilot search
-    await asyncio.sleep(min(1.0 + random.random() * 2.0, timeout))
-
-    elapsed = asyncio.get_event_loop().time() - start
-
-    # Stub: better on medium difficulty
-    difficulty = goal.estimated_difficulty
-    success_prob = max(0.05, 0.6 - abs(difficulty - 0.5))
-
-    success = random.random() < success_prob
-
-    if success:
-        # Simulate Copilot finding a proof
-        tactics = ["select_premises", "search_proof"]
-        return Result(
-            success=True,
-            strategy=StrategyType.COPILOT,
-            tactics=tactics,
-            time_seconds=elapsed,
-        )
-    else:
-        return Result(
-            success=False,
-            strategy=StrategyType.COPILOT,
-            tactics=[],
-            time_seconds=elapsed,
-            error="Copilot search exhausted",
+    # Try Copilot with select_premises first
+    try:
+        # Step 1: Select relevant premises
+        premises_tactic = "select_premises (num := 12)"
+        premises_result = await asyncio.wait_for(
+            dojo.run_tac(
+                theorem_file=goal.metadata.get("file_path", ""),
+                theorem_name=goal.id,
+                state=0,
+                tactic=premises_tactic,
+                tactic_timeout=timeout / 2,
+            ),
+            timeout=timeout / 2,
         )
 
+        # Step 2: Run search_proof (only if premises succeeded or we have enough time)
+        remaining_time = timeout - (asyncio.get_event_loop().time() - start_time)
+        if remaining_time > 5.0:
+            search_tactic = (
+                "search_proof (beam := 4) (temperature := 0.2) (maxSteps := 20)"
+            )
+            search_result = await asyncio.wait_for(
+                dojo.run_tac(
+                    theorem_file=goal.metadata.get("file_path", ""),
+                    theorem_name=goal.id,
+                    state=premises_result.state if premises_result.success else 0,
+                    tactic=search_tactic,
+                    tactic_timeout=remaining_time,
+                ),
+                timeout=remaining_time,
+            )
 
-# Real implementation outline:
-# async def run_copilot_real(goal: Goal, dojo, timeout: float = 20.0) -> Result:
-#     """Real Copilot integration via LeanDojo."""
-#     try:
-#         # Step 1: Select premises
-#         premises_tactic = "select_premises (num := 12)"
-#         premises_result = await dojo.run_tac(goal.id, premises_tactic)
-#
-#         # Step 2: Run search_proof with config
-#         search_tactic = (
-#             "search_proof "
-#             "(beam := 4) "
-#             "(temperature := 0.2) "
-#             "(maxSteps := 20)"
-#         )
-#         search_result = await asyncio.wait_for(
-#             dojo.run_tac(goal.id, search_tactic),
-#             timeout=timeout
-#         )
-#
-#         if search_result.success:
-#             return Result(
-#                 success=True,
-#                 strategy=StrategyType.COPILOT,
-#                 tactics=[premises_tactic, search_tactic],
-#                 time_seconds=...,
-#             )
-#
-#     except asyncio.TimeoutError:
-#         return Result(success=False, error="timeout", ...)
-#
-#     return Result(success=False, ...)
+            if search_result.success:
+                elapsed = asyncio.get_event_loop().time() - start_time
+                tactics = (
+                    [premises_tactic, search_tactic]
+                    if premises_result.success
+                    else [search_tactic]
+                )
+                return Result(
+                    success=True,
+                    strategy=StrategyType.COPILOT,
+                    tactics=tactics,
+                    time_seconds=elapsed,
+                )
+
+    except asyncio.TimeoutError:
+        pass
+    except Exception as e:
+        pass
+
+    # Fallback: try just search_proof without premise selection
+    remaining_time = timeout - (asyncio.get_event_loop().time() - start_time)
+    if remaining_time > 5.0:
+        try:
+            search_tactic = "search_proof (beam := 2) (maxSteps := 10)"
+            search_result = await asyncio.wait_for(
+                dojo.run_tac(
+                    theorem_file=goal.metadata.get("file_path", ""),
+                    theorem_name=goal.id,
+                    state=0,
+                    tactic=search_tactic,
+                    tactic_timeout=remaining_time,
+                ),
+                timeout=remaining_time,
+            )
+
+            if search_result.success:
+                elapsed = asyncio.get_event_loop().time() - start_time
+                return Result(
+                    success=True,
+                    strategy=StrategyType.COPILOT,
+                    tactics=[search_tactic],
+                    time_seconds=elapsed,
+                )
+        except:
+            pass
+
+    elapsed = asyncio.get_event_loop().time() - start_time
+    return Result(
+        success=False,
+        strategy=StrategyType.COPILOT,
+        tactics=[],
+        time_seconds=elapsed,
+        error="Copilot search exhausted",
+    )
