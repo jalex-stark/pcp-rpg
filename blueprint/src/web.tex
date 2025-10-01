@@ -1,0 +1,51 @@
+\documentclass[a4paper]{report}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Lean code listings
+\lstdefinelanguage{Lean}{
+  morekeywords={theorem,lemma,def,example,structure,class,instance,where,by,have,show,sorry,admit},
+  sensitive=true,
+  morecomment=[l]{--},
+  morecomment=[s]{/-}{-/},
+  morestring=[b]",
+}
+
+\lstset{
+  language=Lean,
+  basicstyle=\small\ttfamily,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{red},
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!10}
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+
+% Blueprint-specific commands
+\newcommand{\lean}[1]{\texttt{#1}}
+\newcommand{\leanok}{\textcolor{green}{$\checkmark$}}
+\newcommand{\uses}[1]{\textit{Uses: #1}}
+
+\title{PCP Theorem Formalization Blueprint}
+\author{PCP-RPG Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\input{content.tex}
+
+\end{document}

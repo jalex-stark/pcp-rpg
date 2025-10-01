@@ -1,0 +1,16 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.pdf
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# leanblueprint generated files
+web/
+lean_decls/*.yaml
+
+# Keep the source
+!src/

@@ -1,0 +1,62 @@
+\documentclass[a4paper,11pt]{report}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+
+\geometry{margin=1in}
+
+% Lean code listings
+\lstdefinelanguage{Lean}{
+  morekeywords={theorem,lemma,def,example,structure,class,instance,where,by,have,show,sorry,admit},
+  sensitive=true,
+  morecomment=[l]{--},
+  morecomment=[s]{/-}{-/},
+  morestring=[b]",
+}
+
+\lstset{
+  language=Lean,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{red},
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!10}
+}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+
+% Blueprint-specific commands
+\newcommand{\lean}[1]{\texttt{\small #1}}
+\newcommand{\leanok}{\textcolor{green!70!black}{$\checkmark$}}
+\newcommand{\uses}[1]{\par\noindent\textit{\small Uses: #1}}
+
+\title{PCP Theorem Formalization Blueprint\\
+\large Proving NP = PCP(log n, 1) in Lean 4}
+\author{PCP-RPG Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This blueprint outlines a complete formalization plan for the classical
+Probabilistically Checkable Proofs (PCP) theorem in Lean 4 with mathlib4.
+We follow Dinur's gap amplification proof, organized into modular work packages
+suitable for collaborative formalization with AI assistance.
+\end{abstract}
+
+\tableofcontents
+
+\input{content.tex}
+
+\end{document}

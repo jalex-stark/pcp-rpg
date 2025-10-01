@@ -1,0 +1,18 @@
+# Core dependencies (lightweight baseline)
+typer>=0.9.0
+psutil>=5.9.0
+
+# Dashboard (optional, for `make dashboard`)
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Future: LeanDojo integration (uncomment when ready)
+# lean-dojo>=1.0.0
+
+# Future: ReProver dependencies (uncomment for Profile 2)
+# torch>=2.0.0
+# transformers>=4.30.0
+# faiss-cpu>=1.7.4
+
+# Development
+pytest>=7.4.0

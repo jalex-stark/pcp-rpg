@@ -1,0 +1,400 @@
+{
+  "version": "1.0.0",
+  "metadata": {
+    "title": "PCP Theorem Formalization",
+    "description": "Formalization plan for NP = PCP(log n, 1) following Dinur's gap amplification proof",
+    "authors": ["Research Team"],
+    "updated": "2025-09-29T00:00:00Z"
+  },
+  "nodes": [
+    {
+      "id": "pcp.defs",
+      "kind": "module",
+      "name": "PCP Definitions",
+      "status": "planned",
+      "path": "PCP/Defs.lean",
+      "description": "Core PCP verifier definitions, oracle interface, PCP class predicate",
+      "difficulty": 2,
+      "workPackage": "WP-A",
+      "estimatedLOC": 150
+    },
+    {
+      "id": "pcp.language",
+      "kind": "module",
+      "name": "Language Encodings",
+      "status": "planned",
+      "path": "PCP/Language.lean",
+      "description": "Bitstring encodings, input representations, SAT language definition",
+      "difficulty": 1,
+      "workPackage": "WP-A",
+      "estimatedLOC": 80
+    },
+    {
+      "id": "pcp.subset_np",
+      "kind": "theorem",
+      "name": "PCP(log n, 1) ⊆ NP",
+      "status": "planned",
+      "path": "PCP/Defs.lean",
+      "signature": "theorem PCP_subset_NP : ∀ L, PCP (λ n, O(log n)) (λ _, O(1)) L → L ∈ NP",
+      "description": "Trivial inclusion: enumerate all random strings and include proof bits in NP certificate",
+      "difficulty": 1,
+      "workPackage": "WP-F",
+      "references": [
+        {
+          "paper": "Arora-Barak",
+          "section": "Ch. 11",
+          "pages": "Remark 11.6(3)"
+        }
+      ],
+      "estimatedLOC": 50
+    },
+    {
+      "id": "constraint_graph.defs",
+      "kind": "module",
+      "name": "Constraint Graph Definitions",
+      "status": "planned",
+      "path": "PCP/ConstraintGraph/Defs.lean",
+      "description": "Binary CSP, assignments, satisfaction, UNSAT value",
+      "difficulty": 2,
+      "workPackage": "WP-A",
+      "estimatedLOC": 200
+    },
+    {
+      "id": "constraint_graph.unsat",
+      "kind": "definition",
+      "name": "UNSAT Value",
+      "status": "planned",
+      "path": "PCP/ConstraintGraph/Defs.lean",
+      "signature": "def BinaryCSP.unsat {V α} [Fintype V] [Fintype α] (G : BinaryCSP V α) : ℚ",
+      "description": "Minimum fraction of unsatisfied constraints over all assignments",
+      "difficulty": 1,
+      "workPackage": "WP-A",
+      "notes": "Uses finite maximization via [Fintype (V → α)]",
+      "estimatedLOC": 40
+    },
+    {
+      "id": "constraint_graph.three_color_np_hard",
+      "kind": "theorem",
+      "name": "3-Colorability is NP-hard",
+      "status": "planned",
+      "path": "PCP/ConstraintGraph/Defs.lean",
+      "signature": "theorem threeColor_to_csp : 3Color ≤p (G ↦ (UNSAT(G)=0))",
+      "description": "Reduction from 3-Colorability to 2-CSP satisfiability",
+      "difficulty": 1,
+      "workPackage": "WP-A",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Proposition 1.4",
+          "pages": "p. 3"
+        }
+      ],
+      "estimatedLOC": 100
+    },
+    {
+      "id": "expander.defs",
+      "kind": "module",
+      "name": "Expander Graph Definitions",
+      "status": "planned",
+      "path": "PCP/Expander/Defs.lean",
+      "description": "Combinatorial expansion, spectral gap, explicit families",
+      "difficulty": 4,
+      "workPackage": "WP-B",
+      "notes": "Major missing mathlib4 dependency - may need to port from Isabelle AFP",
+      "estimatedLOC": 300
+    },
+    {
+      "id": "expander.cheeger",
+      "kind": "theorem",
+      "name": "Cheeger's Inequality",
+      "status": "planned",
+      "path": "PCP/Expander/Spectral.lean",
+      "signature": "theorem cheeger_inequality : ∃ h, λ₁(G) ≤ d - h²/(2*d)",
+      "description": "Relates spectral gap to edge expansion",
+      "difficulty": 5,
+      "workPackage": "WP-B",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Theorem 2.3",
+          "pages": "p. 8"
+        }
+      ],
+      "notes": "Core spectral graph theory - needs Rayleigh quotient formalization",
+      "estimatedLOC": 200
+    },
+    {
+      "id": "constraint_graph.preprocess",
+      "kind": "definition",
+      "name": "Preprocess (Regularization + Expanderization)",
+      "status": "planned",
+      "path": "PCP/ConstraintGraph/Preprocess.lean",
+      "signature": "def preprocess {V α} [Fintype V] [Fintype α] (G : BinaryCSP V α) : Σ (V' : Type*) [Fintype V'], BinaryCSP V' α",
+      "description": "Transform CSP into regular, expanding graph via vertex clouds and edge addition",
+      "difficulty": 4,
+      "workPackage": "WP-B",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Def. 4.1, Lemma 4.1-4.2",
+          "pages": "pp. 12-14"
+        }
+      ],
+      "estimatedLOC": 250
+    },
+    {
+      "id": "constraint_graph.preprocess_spec",
+      "kind": "lemma",
+      "name": "Preprocessing Preserves UNSAT",
+      "status": "planned",
+      "path": "PCP/ConstraintGraph/Preprocess.lean",
+      "signature": "lemma preprocess_spec : ∃ λ d β₁, β₁*UNSAT(G) ≤ UNSAT(preprocess G) ≤ UNSAT(G) ∧ regular ∧ λ ≤ const",
+      "description": "Preprocessing maintains UNSAT up to constant factor while achieving regularity and expansion",
+      "difficulty": 4,
+      "workPackage": "WP-B",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Lemma 1.7",
+          "pages": "pp. 5, 10-12"
+        }
+      ],
+      "estimatedLOC": 300
+    },
+    {
+      "id": "constraint_graph.power",
+      "kind": "definition",
+      "name": "Graph Powering",
+      "status": "planned",
+      "path": "PCP/ConstraintGraph/Powering.lean",
+      "signature": "def power {V α} [Fintype V] [Fintype α] (t : ℕ) (G : BinaryCSP V α) : BinaryCSP V (Fin (Gdegree G) → α)",
+      "description": "G^t with walk-based constraints; alphabet grows to tuples",
+      "difficulty": 3,
+      "workPackage": "WP-C",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "§1.2",
+          "pages": "pp. 4-5"
+        }
+      ],
+      "estimatedLOC": 200
+    },
+    {
+      "id": "constraint_graph.powering_soundness",
+      "kind": "theorem",
+      "name": "Powering Amplifies UNSAT",
+      "status": "planned",
+      "path": "PCP/ConstraintGraph/Powering.lean",
+      "signature": "theorem powering_soundness : ∃ β₂>0, UNSAT(G^t) ≥ β₂ * √t * min (UNSAT(G)) (1/t)",
+      "description": "Core gap amplification: powering increases UNSAT by ~√t",
+      "difficulty": 5,
+      "workPackage": "WP-C",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Lemma 1.6",
+          "pages": "pp. 4-5"
+        }
+      ],
+      "notes": "HARDEST LEMMA - requires random walk mixing bounds and spectral inequalities",
+      "estimatedLOC": 400
+    },
+    {
+      "id": "assignment_tester.defs",
+      "kind": "module",
+      "name": "Assignment Tester Interface",
+      "status": "planned",
+      "path": "PCP/AssignmentTester/Defs.lean",
+      "description": "Assignment tester structure with soundness and completeness properties",
+      "difficulty": 3,
+      "workPackage": "WP-D",
+      "estimatedLOC": 150
+    },
+    {
+      "id": "assignment_tester.composition",
+      "kind": "theorem",
+      "name": "Composition Reduces Alphabet",
+      "status": "planned",
+      "path": "PCP/AssignmentTester/Defs.lean",
+      "signature": "theorem composition_lemma : ∃ β₃>0 c, UNSAT(G ∘ P) ≥ β₃ * UNSAT(G) ∧ size ≤ c * size(G)",
+      "description": "Composing CSP with assignment tester preserves UNSAT while reducing alphabet",
+      "difficulty": 3,
+      "workPackage": "WP-D",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Lemma 1.8, Def. 5.1",
+          "pages": "pp. 16-17"
+        }
+      ],
+      "estimatedLOC": 250
+    },
+    {
+      "id": "assignment_tester.existence",
+      "kind": "theorem",
+      "name": "Constant-Alphabet Tester Exists",
+      "status": "planned",
+      "path": "PCP/AssignmentTester/Existence.lean",
+      "signature": "theorem tester_exists : ∃ P : AssignmentTester, Fintype.card P.Σ0 = O(1) ∧ P.ε ≥ ε0",
+      "description": "Explicit construction via Long Code",
+      "difficulty": 4,
+      "workPackage": "WP-D",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Theorem 5.1, §7",
+          "pages": "pp. 16, 23+"
+        }
+      ],
+      "notes": "Decouplable module - can be treated as black box initially",
+      "estimatedLOC": 300
+    },
+    {
+      "id": "amplification.main",
+      "kind": "theorem",
+      "name": "Dinur Main Theorem",
+      "status": "planned",
+      "path": "PCP/Amplification/Main.lean",
+      "signature": "theorem dinur_main : ∃ Σ0, ∀ Σ, ∃ C α∈(0,1), ∀ G, ∃ G', size(G') ≤ C*size(G) ∧ UNSAT(G') ≥ min(2*UNSAT(G), α)",
+      "description": "Gap-doubling with linear size growth - combines preprocessing, powering, and composition",
+      "difficulty": 3,
+      "workPackage": "WP-E",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Theorem 1.5",
+          "pages": "pp. 10-11"
+        }
+      ],
+      "estimatedLOC": 200
+    },
+    {
+      "id": "equivalences.gap_pcp",
+      "kind": "theorem",
+      "name": "Gap-CSP ⇔ PCP(log n, O(1))",
+      "status": "planned",
+      "path": "PCP/Equivalences.lean",
+      "signature": "theorem PCP_gapCSP_equiv : (NP ⊆ PCP(log, O(1))) ↔ (Gap-2CSP with constant gap is NP-hard)",
+      "description": "Standard equivalence between PCP and Gap-CSP formulations",
+      "difficulty": 2,
+      "workPackage": "WP-F",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Lemma 1.3",
+          "pages": "pp. 2-3"
+        }
+      ],
+      "estimatedLOC": 150
+    },
+    {
+      "id": "endgame.gap_csp_hard",
+      "kind": "theorem",
+      "name": "NP-hard Constant-Gap 2-CSP",
+      "status": "planned",
+      "path": "PCP/Endgame.lean",
+      "signature": "theorem gap2csp_hard : ∃ Σ0, NP-hard ({G | UNSAT(G)=0} vs UNSAT(G)≥α)",
+      "description": "Iterate Dinur main theorem O(log n) times to boost gap to constant",
+      "difficulty": 2,
+      "workPackage": "WP-F",
+      "references": [
+        {
+          "paper": "Dinur",
+          "section": "Theorem 1.2",
+          "pages": "pp. 11-12"
+        }
+      ],
+      "estimatedLOC": 100
+    },
+    {
+      "id": "endgame.pcp_theorem",
+      "kind": "theorem",
+      "name": "NP = PCP(log n, 1)",
+      "status": "planned",
+      "path": "PCP/Endgame.lean",
+      "signature": "theorem PCP_theorem : NP = { L | PCP (λ n, O(log n)) (λ _, O(1)) L }",
+      "description": "Final statement combining all pieces",
+      "difficulty": 2,
+      "workPackage": "WP-F",
+      "references": [
+        {
+          "paper": "Arora-Barak",
+          "section": "Theorem 11.5"
+        }
+      ],
+      "estimatedLOC": 50
+    }
+  ],
+  "edges": [
+    { "from": "pcp.language", "to": "pcp.defs", "type": "imports" },
+    { "from": "pcp.defs", "to": "pcp.subset_np", "type": "depends" },
+    { "from": "constraint_graph.defs", "to": "constraint_graph.unsat", "type": "depends" },
+    { "from": "constraint_graph.defs", "to": "constraint_graph.three_color_np_hard", "type": "depends" },
+    { "from": "expander.defs", "to": "expander.cheeger", "type": "depends" },
+    { "from": "expander.cheeger", "to": "constraint_graph.preprocess", "type": "depends" },
+    { "from": "constraint_graph.defs", "to": "constraint_graph.preprocess", "type": "depends" },
+    { "from": "constraint_graph.preprocess", "to": "constraint_graph.preprocess_spec", "type": "depends" },
+    { "from": "constraint_graph.defs", "to": "constraint_graph.power", "type": "depends" },
+    { "from": "constraint_graph.power", "to": "constraint_graph.powering_soundness", "type": "depends" },
+    { "from": "expander.cheeger", "to": "constraint_graph.powering_soundness", "type": "depends", "label": "mixing bounds" },
+    { "from": "constraint_graph.defs", "to": "assignment_tester.defs", "type": "depends" },
+    { "from": "assignment_tester.defs", "to": "assignment_tester.composition", "type": "depends" },
+    { "from": "assignment_tester.defs", "to": "assignment_tester.existence", "type": "depends" },
+    { "from": "constraint_graph.preprocess_spec", "to": "amplification.main", "type": "depends" },
+    { "from": "constraint_graph.powering_soundness", "to": "amplification.main", "type": "depends" },
+    { "from": "assignment_tester.composition", "to": "amplification.main", "type": "depends" },
+    { "from": "assignment_tester.existence", "to": "amplification.main", "type": "depends" },
+    { "from": "pcp.defs", "to": "equivalences.gap_pcp", "type": "depends" },
+    { "from": "constraint_graph.defs", "to": "equivalences.gap_pcp", "type": "depends" },
+    { "from": "amplification.main", "to": "endgame.gap_csp_hard", "type": "depends" },
+    { "from": "constraint_graph.three_color_np_hard", "to": "endgame.gap_csp_hard", "type": "depends" },
+    { "from": "equivalences.gap_pcp", "to": "endgame.pcp_theorem", "type": "depends" },
+    { "from": "endgame.gap_csp_hard", "to": "endgame.pcp_theorem", "type": "depends" },
+    { "from": "pcp.subset_np", "to": "endgame.pcp_theorem", "type": "depends" }
+  ],
+  "workPackages": [
+    {
+      "id": "WP-A",
+      "name": "Foundations",
+      "description": "PCP/Defs, Language, basic BinaryCSP + UNSAT",
+      "difficulty": "★–★★",
+      "owner": "API-oriented contributor"
+    },
+    {
+      "id": "WP-B",
+      "name": "Expanders & Preprocessing",
+      "description": "Expander graphs, spectral bounds, prep1/prep2",
+      "difficulty": "★★★–★★★★",
+      "owner": "Graph theory + linear algebra"
+    },
+    {
+      "id": "WP-C",
+      "name": "Powering",
+      "description": "Graph powering + soundness theorem (hardest piece)",
+      "difficulty": "★★★★★",
+      "owner": "Spectral/mixing arguments expert"
+    },
+    {
+      "id": "WP-D",
+      "name": "Assignment Testers",
+      "description": "Defs + Existence (Long Code tester)",
+      "difficulty": "★★★–★★★★",
+      "owner": "Coding theory, decouplable module"
+    },
+    {
+      "id": "WP-E",
+      "name": "Amplification Main",
+      "description": "Glue C+B+D to prove dinur_main",
+      "difficulty": "★★★",
+      "owner": "Integration specialist"
+    },
+    {
+      "id": "WP-F",
+      "name": "Equivalences & Endgame",
+      "description": "Gap-CSP ⇔ PCP, trivial inclusion, final statement",
+      "difficulty": "★★",
+      "owner": "Complexity theory background"
+    }
+  ]
+}

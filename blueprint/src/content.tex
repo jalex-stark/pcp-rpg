@@ -1,0 +1,363 @@
+% This file is auto-generated from website/data/pcp-graph.json
+% by website/lib/generate_blueprint.py
+% DO NOT EDIT DIRECTLY - edit the JSON and regenerate
+
+\chapter{Introduction}
+
+Formalization plan for NP = PCP(log n, 1) following Dinur's gap amplification proof
+
+This blueprint presents a formalization plan for the classical PCP theorem
+following Dinur's gap amplification proof via constraint graphs.
+
+\chapter{Foundations}
+
+PCP/Defs, Language, basic BinaryCSP + UNSAT
+
+\textbf{Difficulty:} ★–★★
+
+\begin{definition}[PCP Definitions]
+\label{pcp-defs}
+\lean{PCP.Defs}
+Core PCP verifier definitions, oracle interface, PCP class predicate
+
+\noindent Difficulty: \textbf{★★☆☆☆} $\bullet$ Est. 150 LOC $\bullet$ Work Package: Foundations
+
+\end{definition}
+
+\begin{definition}[Language Encodings]
+\label{pcp-language}
+\lean{PCP.Language}
+Bitstring encodings, input representations, SAT language definition
+
+\noindent Difficulty: \textbf{★☆☆☆☆} $\bullet$ Est. 80 LOC $\bullet$ Work Package: Foundations
+
+\end{definition}
+
+\begin{definition}[Constraint Graph Definitions]
+\label{constraint_graph-defs}
+\lean{PCP.ConstraintGraph.Defs}
+Binary CSP, assignments, satisfaction, UNSAT value
+
+\noindent Difficulty: \textbf{★★☆☆☆} $\bullet$ Est. 200 LOC $\bullet$ Work Package: Foundations
+
+\end{definition}
+
+\begin{definition}[UNSAT Value]
+\label{constraint_graph-unsat}
+\lean{PCP.ConstraintGraph.Defs}
+\uses{constraint_graph-defs}
+Minimum fraction of unsatisfied constraints over all assignments
+
+\begin{lstlisting}[language=Lean]
+def BinaryCSP.unsat {V α} [Fintype V] [Fintype α] (G : BinaryCSP V α) : ℚ
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★☆☆☆☆} $\bullet$ Est. 40 LOC $\bullet$ Work Package: Foundations
+
+\textbf{Notes:} Uses finite maximization via [Fintype (V → α)]
+
+\end{definition}
+
+\begin{theorem}[3-Colorability is NP-hard]
+\label{constraint_graph-three_color_np_hard}
+\lean{PCP.ConstraintGraph.Defs}
+\uses{constraint_graph-defs}
+Reduction from 3-Colorability to 2-CSP satisfiability
+
+\begin{lstlisting}[language=Lean]
+theorem threeColor_to_csp : 3Color ≤p (G ↦ (UNSAT(G)=0))
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★☆☆☆☆} $\bullet$ Est. 100 LOC $\bullet$ Work Package: Foundations
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Proposition 1.4 (p. 3)
+\end{itemize}
+
+\end{theorem}
+
+\chapter{Expanders \textbackslash{}& Preprocessing}
+
+Expander graphs, spectral bounds, prep1/prep2
+
+\textbf{Difficulty:} ★★★–★★★★
+
+\begin{definition}[Expander Graph Definitions]
+\label{expander-defs}
+\lean{PCP.Expander.Defs}
+Combinatorial expansion, spectral gap, explicit families
+
+\noindent Difficulty: \textbf{★★★★☆} $\bullet$ Est. 300 LOC $\bullet$ Work Package: Expanders & Preprocessing
+
+\textbf{Notes:} Major missing mathlib4 dependency - may need to port from Isabelle AFP
+
+\end{definition}
+
+\begin{theorem}[Cheeger's Inequality]
+\label{expander-cheeger}
+\lean{PCP.Expander.Spectral}
+\uses{expander-defs}
+Relates spectral gap to edge expansion
+
+\begin{lstlisting}[language=Lean]
+theorem cheeger_inequality : ∃ h, λ₁(G) ≤ d - h²/(2*d)
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★★★★} $\bullet$ Est. 200 LOC $\bullet$ Work Package: Expanders & Preprocessing
+
+\textbf{Notes:} Core spectral graph theory - needs Rayleigh quotient formalization
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Theorem 2.3 (p. 8)
+\end{itemize}
+
+\end{theorem}
+
+\begin{definition}[Preprocess (Regularization + Expanderization)]
+\label{constraint_graph-preprocess}
+\lean{PCP.ConstraintGraph.Preprocess}
+\uses{expander-cheeger, constraint_graph-defs}
+Transform CSP into regular, expanding graph via vertex clouds and edge addition
+
+\begin{lstlisting}[language=Lean]
+def preprocess {V α} [Fintype V] [Fintype α] (G : BinaryCSP V α) : Σ (V' : Type*) [Fintype V'], BinaryCSP V' α
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★★★☆} $\bullet$ Est. 250 LOC $\bullet$ Work Package: Expanders & Preprocessing
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Def. 4.1, Lemma 4.1-4.2 (pp. 12-14)
+\end{itemize}
+
+\end{definition}
+
+\begin{lemma}[Preprocessing Preserves UNSAT]
+\label{constraint_graph-preprocess_spec}
+\lean{PCP.ConstraintGraph.Preprocess}
+\uses{constraint_graph-preprocess}
+Preprocessing maintains UNSAT up to constant factor while achieving regularity and expansion
+
+\begin{lstlisting}[language=Lean]
+lemma preprocess_spec : ∃ λ d β₁, β₁*UNSAT(G) ≤ UNSAT(preprocess G) ≤ UNSAT(G) ∧ regular ∧ λ ≤ const
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★★★☆} $\bullet$ Est. 300 LOC $\bullet$ Work Package: Expanders & Preprocessing
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Lemma 1.7 (pp. 5, 10-12)
+\end{itemize}
+
+\end{lemma}
+
+\chapter{Powering}
+
+Graph powering + soundness theorem (hardest piece)
+
+\textbf{Difficulty:} ★★★★★
+
+\begin{definition}[Graph Powering]
+\label{constraint_graph-power}
+\lean{PCP.ConstraintGraph.Powering}
+\uses{constraint_graph-defs}
+G\textbackslash{}^{}t with walk-based constraints; alphabet grows to tuples
+
+\begin{lstlisting}[language=Lean]
+def power {V α} [Fintype V] [Fintype α] (t : ℕ) (G : BinaryCSP V α) : BinaryCSP V (Fin (Gdegree G) → α)
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★★☆☆} $\bullet$ Est. 200 LOC $\bullet$ Work Package: Powering
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §§1.2 (pp. 4-5)
+\end{itemize}
+
+\end{definition}
+
+\begin{theorem}[Powering Amplifies UNSAT]
+\label{constraint_graph-powering_soundness}
+\lean{PCP.ConstraintGraph.Powering}
+\uses{constraint_graph-power, expander-cheeger}
+Core gap amplification: powering increases UNSAT by \textbackslash{}textasciitilde{}√t
+
+\begin{lstlisting}[language=Lean]
+theorem powering_soundness : ∃ β₂>0, UNSAT(G^t) ≥ β₂ * √t * min (UNSAT(G)) (1/t)
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★★★★} $\bullet$ Est. 400 LOC $\bullet$ Work Package: Powering
+
+\textbf{Notes:} HARDEST LEMMA - requires random walk mixing bounds and spectral inequalities
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Lemma 1.6 (pp. 4-5)
+\end{itemize}
+
+\end{theorem}
+
+\chapter{Assignment Testers}
+
+Defs + Existence (Long Code tester)
+
+\textbf{Difficulty:} ★★★–★★★★
+
+\begin{definition}[Assignment Tester Interface]
+\label{assignment_tester-defs}
+\lean{PCP.AssignmentTester.Defs}
+\uses{constraint_graph-defs}
+Assignment tester structure with soundness and completeness properties
+
+\noindent Difficulty: \textbf{★★★☆☆} $\bullet$ Est. 150 LOC $\bullet$ Work Package: Assignment Testers
+
+\end{definition}
+
+\begin{theorem}[Composition Reduces Alphabet]
+\label{assignment_tester-composition}
+\lean{PCP.AssignmentTester.Defs}
+\uses{assignment_tester-defs}
+Composing CSP with assignment tester preserves UNSAT while reducing alphabet
+
+\begin{lstlisting}[language=Lean]
+theorem composition_lemma : ∃ β₃>0 c, UNSAT(G ∘ P) ≥ β₃ * UNSAT(G) ∧ size ≤ c * size(G)
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★★☆☆} $\bullet$ Est. 250 LOC $\bullet$ Work Package: Assignment Testers
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Lemma 1.8, Def. 5.1 (pp. 16-17)
+\end{itemize}
+
+\end{theorem}
+
+\begin{theorem}[Constant-Alphabet Tester Exists]
+\label{assignment_tester-existence}
+\lean{PCP.AssignmentTester.Existence}
+\uses{assignment_tester-defs}
+Explicit construction via Long Code
+
+\begin{lstlisting}[language=Lean]
+theorem tester_exists : ∃ P : AssignmentTester, Fintype.card P.Σ0 = O(1) ∧ P.ε ≥ ε0
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★★★☆} $\bullet$ Est. 300 LOC $\bullet$ Work Package: Assignment Testers
+
+\textbf{Notes:} Decouplable module - can be treated as black box initially
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Theorem 5.1, §7 (pp. 16, 23+)
+\end{itemize}
+
+\end{theorem}
+
+\chapter{Amplification Main}
+
+Glue C+B+D to prove dinur\textbackslash{}_main
+
+\textbf{Difficulty:} ★★★
+
+\begin{theorem}[Dinur Main Theorem]
+\label{amplification-main}
+\lean{PCP.Amplification.Main}
+\uses{constraint_graph-preprocess_spec, constraint_graph-powering_soundness, assignment_tester-composition, assignment_tester-existence}
+Gap-doubling with linear size growth - combines preprocessing, powering, and composition
+
+\begin{lstlisting}[language=Lean]
+theorem dinur_main : ∃ Σ0, ∀ Σ, ∃ C α∈(0,1), ∀ G, ∃ G', size(G') ≤ C*size(G) ∧ UNSAT(G') ≥ min(2*UNSAT(G), α)
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★★☆☆} $\bullet$ Est. 200 LOC $\bullet$ Work Package: Amplification Main
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Theorem 1.5 (pp. 10-11)
+\end{itemize}
+
+\end{theorem}
+
+\chapter{Equivalences \textbackslash{}& Endgame}
+
+Gap-CSP ⇔ PCP, trivial inclusion, final statement
+
+\textbf{Difficulty:} ★★
+
+\begin{theorem}[PCP(log n, 1) ⊆ NP]
+\label{pcp-subset_np}
+\lean{PCP.Defs}
+\uses{pcp-defs}
+Trivial inclusion: enumerate all random strings and include proof bits in NP certificate
+
+\begin{lstlisting}[language=Lean]
+theorem PCP_subset_NP : ∀ L, PCP (λ n, O(log n)) (λ _, O(1)) L → L ∈ NP
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★☆☆☆☆} $\bullet$ Est. 50 LOC $\bullet$ Work Package: Equivalences & Endgame
+
+\textbf{References:}
+\begin{itemize}
+  \item Arora-Barak, §Ch. 11 (Remark 11.6(3))
+\end{itemize}
+
+\end{theorem}
+
+\begin{theorem}[Gap-CSP ⇔ PCP(log n, O(1))]
+\label{equivalences-gap_pcp}
+\lean{PCP.Equivalences}
+\uses{pcp-defs, constraint_graph-defs}
+Standard equivalence between PCP and Gap-CSP formulations
+
+\begin{lstlisting}[language=Lean]
+theorem PCP_gapCSP_equiv : (NP ⊆ PCP(log, O(1))) ↔ (Gap-2CSP with constant gap is NP-hard)
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★☆☆☆} $\bullet$ Est. 150 LOC $\bullet$ Work Package: Equivalences & Endgame
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Lemma 1.3 (pp. 2-3)
+\end{itemize}
+
+\end{theorem}
+
+\begin{theorem}[NP-hard Constant-Gap 2-CSP]
+\label{endgame-gap_csp_hard}
+\lean{PCP.Endgame}
+\uses{amplification-main, constraint_graph-three_color_np_hard}
+Iterate Dinur main theorem O(log n) times to boost gap to constant
+
+\begin{lstlisting}[language=Lean]
+theorem gap2csp_hard : ∃ Σ0, NP-hard ({G | UNSAT(G)=0} vs UNSAT(G)≥α)
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★☆☆☆} $\bullet$ Est. 100 LOC $\bullet$ Work Package: Equivalences & Endgame
+
+\textbf{References:}
+\begin{itemize}
+  \item Dinur, §Theorem 1.2 (pp. 11-12)
+\end{itemize}
+
+\end{theorem}
+
+\begin{theorem}[NP = PCP(log n, 1)]
+\label{endgame-pcp_theorem}
+\lean{PCP.Endgame}
+\uses{equivalences-gap_pcp, endgame-gap_csp_hard, pcp-subset_np}
+Final statement combining all pieces
+
+\begin{lstlisting}[language=Lean]
+theorem PCP_theorem : NP = { L | PCP (λ n, O(log n)) (λ _, O(1)) L }
+\end{lstlisting}
+
+\noindent Difficulty: \textbf{★★☆☆☆} $\bullet$ Est. 50 LOC $\bullet$ Work Package: Equivalences & Endgame
+
+\textbf{References:}
+\begin{itemize}
+  \item Arora-Barak, §Theorem 11.5
+\end{itemize}
+
+\end{theorem}

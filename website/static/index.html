@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCP Theorem - Repository Planning Graph</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+        }
+
+        header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 1rem 2rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        .subtitle {
+            font-size: 0.875rem;
+            color: #8b949e;
+            margin-top: 0.25rem;
+        }
+
+        .container {
+            position: relative;
+            height: calc(100vh - 80px);
+            width: 100vw;
+        }
+
+        #graph-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0d1117;
+        }
+
+        #sidebar {
+            position: fixed;
+            right: 0;
+            top: 80px;
+            width: 400px;
+            height: calc(100vh - 80px);
+            background: rgba(22, 27, 34, 0.98);
+            border-left: 1px solid #30363d;
+            overflow-y: auto;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 100;
+        }
+
+        #sidebar.collapsed {
+            transform: translateX(400px);
+        }
+
+        #sidebar h2 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            color: #58a6ff;
+        }
+
+        #sidebar.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b949e;
+            font-style: italic;
+        }
+
+        .node-details {
+            line-height: 1.6;
+        }
+
+        .node-details .label {
+            color: #8b949e;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .node-details .value {
+            color: #c9d1d9;
+        }
+
+        .node-details .signature {
+            background: #0d1117;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.75rem;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+            border: 1px solid #30363d;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-planned { background: #1f6feb; color: white; }
+        .status-stated { background: #a371f7; color: white; }
+        .status-proved { background: #3fb950; color: white; }
+        .status-tested { background: #bf8700; color: white; }
+        .status-blocked { background: #f85149; color: white; }
+
+        .difficulty {
+            color: #f0883e;
+        }
+
+        .reference {
+            background: #0d1117;
+            padding: 0.5rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            border-left: 3px solid #58a6ff;
+        }
+
+        /* Graph styles */
+        .node {
+            cursor: pointer;
+            stroke-width: 2px;
+        }
+
+        .node.selected {
+            stroke: #f0883e;
+            stroke-width: 3px;
+        }
+
+        .link {
+            fill: none;
+            stroke-opacity: 0.4;
+        }
+
+        .link-label {
+            font-size: 10px;
+            fill: #8b949e;
+        }
+
+        .node-label {
+            font-size: 11px;
+            pointer-events: none;
+            text-anchor: middle;
+            fill: #c9d1d9;
+        }
+
+        /* Legend */
+        .legend {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(22, 27, 34, 0.95);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1rem;
+            font-size: 0.75rem;
+            backdrop-filter: blur(12px);
+            z-index: 10;
+            cursor: move;
+        }
+
+        .legend.minimized strong:not(:first-child),
+        .legend.minimized hr,
+        .legend.minimized .legend-item {
+            display: none;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        /* Stats panel */
+        .stats {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(22, 27, 34, 0.95);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 1rem;
+            font-size: 0.875rem;
+            min-width: 200px;
+            backdrop-filter: blur(12px);
+            z-index: 10;
+            cursor: move;
+        }
+
+        .stats.minimized {
+            width: auto;
+            min-width: auto;
+        }
+
+        .stats.minimized .stat-item {
+            display: none;
+        }
+
+        .stats h3 {
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+            color: #58a6ff;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.5rem 0;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .stat-label {
+            color: #8b949e;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #58a6ff;
+        }
+
+        /* Control buttons */
+        .panel-controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .control-btn {
+            background: transparent;
+            border: 1px solid #30363d;
+            color: #8b949e;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #21262d;
+            color: #58a6ff;
+            border-color: #58a6ff;
+        }
+
+        /* Sidebar toggle */
+        #sidebar-toggle {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(22, 27, 34, 0.95);
+            border: 1px solid #30363d;
+            border-right: none;
+            border-radius: 6px 0 0 6px;
+            padding: 1rem 0.5rem;
+            cursor: pointer;
+            z-index: 99;
+            backdrop-filter: blur(12px);
+            transition: right 0.3s ease;
+            color: #58a6ff;
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+
+        #sidebar-toggle:hover {
+            background: rgba(31, 111, 235, 0.1);
+        }
+
+        #sidebar-toggle.sidebar-open {
+            right: 400px;
+        }
+
+        /* Zoom controls */
+        .zoom-controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            background: rgba(22, 27, 34, 0.95);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            width: 40px;
+            height: 40px;
+            color: #58a6ff;
+            cursor: pointer;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(12px);
+            transition: all 0.2s;
+        }
+
+        .zoom-btn:hover {
+            background: rgba(31, 111, 235, 0.1);
+            border-color: #58a6ff;
+        }
+
+        /* Search bar */
+        .search-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        #search-input {
+            background: rgba(22, 27, 34, 0.95);
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            color: #c9d1d9;
+            font-size: 0.875rem;
+            width: 300px;
+            backdrop-filter: blur(12px);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        #search-input:focus {
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+        }
+
+        #search-input::placeholder {
+            color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PCP Theorem Formalization</h1>
+        <div class="subtitle">Repository Planning Graph - Interactive Dependency Visualization</div>
+    </header>
+
+    <div class="container">
+        <div id="graph-container">
+            <svg id="graph"></svg>
+
+            <div class="legend">
+                <strong>Node Status</strong>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #1f6feb;"></div>
+                    <span>Planned</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #a371f7;"></div>
+                    <span>Stated</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #3fb950;"></div>
+                    <span>Proved</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #bf8700;"></div>
+                    <span>Tested</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f85149;"></div>
+                    <span>Blocked</span>
+                </div>
+                <hr style="margin: 0.75rem 0; border: 0; border-top: 1px solid #30363d;">
+                <strong>Node Types</strong>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: transparent; border: 2px solid #8b949e;"></div>
+                    <span>Module</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: transparent; border: 2px solid #58a6ff; border-style: dashed;"></div>
+                    <span>Theorem</span>
+                </div>
+            </div>
+
+            <div class="stats">
+                <h3>Progress Overview</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Total Nodes:</span>
+                    <span class="stat-value" id="stat-total">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Theorems:</span>
+                    <span class="stat-value" id="stat-theorems">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Modules:</span>
+                    <span class="stat-value" id="stat-modules">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Est. LOC:</span>
+                    <span class="stat-value" id="stat-loc">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Proved:</span>
+                    <span class="stat-value" id="stat-proved">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="sidebar" class="empty">
+            <p>Click on a node to view details</p>
+        </div>
+    </div>
+
+    <script src="graph.js"></script>
+</body>
+</html>

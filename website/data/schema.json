@@ -1,0 +1,131 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PCP RPG Graph Schema",
+  "description": "Repository Planning Graph for PCP theorem formalization",
+  "type": "object",
+  "required": ["version", "metadata", "nodes", "edges"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version for compatibility"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["title", "description"],
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "authors": { "type": "array", "items": { "type": "string" } },
+        "updated": { "type": "string", "format": "date-time" }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "name", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier (e.g., 'pcp.constraint_graph.defs')"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["module", "theorem", "lemma", "definition", "axiom"],
+            "description": "Type of node"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["planned", "stated", "proved", "tested", "blocked"],
+            "description": "Current formalization status"
+          },
+          "path": {
+            "type": "string",
+            "description": "Lean file path (e.g., 'PCP/ConstraintGraph/Defs.lean')"
+          },
+          "signature": {
+            "type": "string",
+            "description": "Lean type signature"
+          },
+          "description": {
+            "type": "string",
+            "description": "What this node represents"
+          },
+          "difficulty": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "Difficulty rating (1-5 stars)"
+          },
+          "workPackage": {
+            "type": "string",
+            "description": "Work package ID (e.g., 'WP-A', 'WP-B')"
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "paper": { "type": "string" },
+                "section": { "type": "string" },
+                "pages": { "type": "string" }
+              }
+            }
+          },
+          "notes": {
+            "type": "string",
+            "description": "Implementation notes, gotchas, etc."
+          },
+          "estimatedLOC": {
+            "type": "integer",
+            "description": "Estimated lines of Lean code"
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "type"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Source node ID"
+          },
+          "to": {
+            "type": "string",
+            "description": "Target node ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["depends", "imports", "uses", "refines", "implements"],
+            "description": "Dependency type"
+          },
+          "label": {
+            "type": "string",
+            "description": "Optional edge label"
+          }
+        }
+      }
+    },
+    "workPackages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "difficulty": { "type": "string" },
+          "owner": { "type": "string" }
+        }
+      }
+    }
+  }
+}

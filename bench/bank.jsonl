@@ -1,0 +1,64 @@
+{"id": "nat_add_zero", "goal": "∀ n : ℕ, n + 0 = n", "difficulty": 0.1, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_zero_add", "goal": "∀ n : ℕ, 0 + n = n", "difficulty": 0.1, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_add_comm", "goal": "∀ n m : ℕ, n + m = m + n", "difficulty": 0.3, "priority": 0.6, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_add_assoc", "goal": "∀ n m k : ℕ, (n + m) + k = n + (m + k)", "difficulty": 0.3, "priority": 0.6, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_mul_zero", "goal": "∀ n : ℕ, n * 0 = 0", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_zero_mul", "goal": "∀ n : ℕ, 0 * n = 0", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_mul_one", "goal": "∀ n : ℕ, n * 1 = n", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_one_mul", "goal": "∀ n : ℕ, 1 * n = n", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_mul_comm", "goal": "∀ n m : ℕ, n * m = m * n", "difficulty": 0.4, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_mul_assoc", "goal": "∀ n m k : ℕ, (n * m) * k = n * (m * k)", "difficulty": 0.4, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_succ_add", "goal": "∀ n m : ℕ, n.succ + m = (n + m).succ", "difficulty": 0.3, "priority": 0.6, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_add_succ", "goal": "∀ n m : ℕ, n + m.succ = (n + m).succ", "difficulty": 0.3, "priority": 0.6, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "list_length_nil", "goal": "∀ α : Type, [].length = 0", "difficulty": 0.1, "priority": 0.5, "context": ["List"], "metadata": {"category": "easy", "topic": "list"}}
+{"id": "list_length_cons", "goal": "∀ α : Type, ∀ (x : α) (xs : List α), (x :: xs).length = xs.length + 1", "difficulty": 0.2, "priority": 0.5, "context": ["List"], "metadata": {"category": "easy", "topic": "list"}}
+{"id": "list_append_nil", "goal": "∀ α : Type, ∀ (xs : List α), xs ++ [] = xs", "difficulty": 0.2, "priority": 0.5, "context": ["List"], "metadata": {"category": "easy", "topic": "list"}}
+{"id": "list_nil_append", "goal": "∀ α : Type, ∀ (xs : List α), [] ++ xs = xs", "difficulty": 0.1, "priority": 0.5, "context": ["List"], "metadata": {"category": "easy", "topic": "list"}}
+{"id": "list_append_assoc", "goal": "∀ α : Type, ∀ (xs ys zs : List α), (xs ++ ys) ++ zs = xs ++ (ys ++ zs)", "difficulty": 0.4, "priority": 0.7, "context": ["List"], "metadata": {"category": "medium", "topic": "list"}}
+{"id": "list_length_append", "goal": "∀ α : Type, ∀ (xs ys : List α), (xs ++ ys).length = xs.length + ys.length", "difficulty": 0.5, "priority": 0.7, "context": ["List"], "metadata": {"category": "medium", "topic": "list"}}
+{"id": "list_reverse_reverse", "goal": "∀ α : Type, ∀ (xs : List α), xs.reverse.reverse = xs", "difficulty": 0.6, "priority": 0.8, "context": ["List"], "metadata": {"category": "hard", "topic": "list"}}
+{"id": "list_reverse_append", "goal": "∀ α : Type, ∀ (xs ys : List α), (xs ++ ys).reverse = ys.reverse ++ xs.reverse", "difficulty": 0.6, "priority": 0.8, "context": ["List"], "metadata": {"category": "hard", "topic": "list"}}
+{"id": "option_map_none", "goal": "∀ α β : Type, ∀ (f : α → β), Option.map f none = none", "difficulty": 0.1, "priority": 0.5, "context": ["Option"], "metadata": {"category": "easy", "topic": "option"}}
+{"id": "option_map_some", "goal": "∀ α β : Type, ∀ (f : α → β) (x : α), Option.map f (some x) = some (f x)", "difficulty": 0.2, "priority": 0.5, "context": ["Option"], "metadata": {"category": "easy", "topic": "option"}}
+{"id": "option_bind_none", "goal": "∀ α β : Type, ∀ (f : α → Option β), Option.bind none f = none", "difficulty": 0.2, "priority": 0.5, "context": ["Option"], "metadata": {"category": "easy", "topic": "option"}}
+{"id": "option_bind_some", "goal": "∀ α β : Type, ∀ (f : α → Option β) (x : α), Option.bind (some x) f = f x", "difficulty": 0.2, "priority": 0.5, "context": ["Option"], "metadata": {"category": "easy", "topic": "option"}}
+{"id": "nat_sub_self", "goal": "∀ n : ℕ, n - n = 0", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_sub_zero", "goal": "∀ n : ℕ, n - 0 = n", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_zero_sub", "goal": "∀ n : ℕ, 0 - n = 0", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_add_sub_cancel", "goal": "∀ n m : ℕ, (n + m) - m = n", "difficulty": 0.4, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_sub_add_cancel", "goal": "∀ n m : ℕ, m ≤ n → (n - m) + m = n", "difficulty": 0.5, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_min_comm", "goal": "∀ n m : ℕ, min n m = min m n", "difficulty": 0.3, "priority": 0.6, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_max_comm", "goal": "∀ n m : ℕ, max n m = max m n", "difficulty": 0.3, "priority": 0.6, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "nat_min_self", "goal": "∀ n : ℕ, min n n = n", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_max_self", "goal": "∀ n : ℕ, max n n = n", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "list_map_nil", "goal": "∀ α β : Type, ∀ (f : α → β), List.map f [] = []", "difficulty": 0.1, "priority": 0.5, "context": ["List"], "metadata": {"category": "easy", "topic": "list"}}
+{"id": "list_map_cons", "goal": "∀ α β : Type, ∀ (f : α → β) (x : α) (xs : List α), List.map f (x :: xs) = f x :: List.map f xs", "difficulty": 0.2, "priority": 0.5, "context": ["List"], "metadata": {"category": "easy", "topic": "list"}}
+{"id": "list_map_append", "goal": "∀ α β : Type, ∀ (f : α → β) (xs ys : List α), List.map f (xs ++ ys) = List.map f xs ++ List.map f ys", "difficulty": 0.5, "priority": 0.7, "context": ["List"], "metadata": {"category": "medium", "topic": "list"}}
+{"id": "list_map_map", "goal": "∀ α β γ : Type, ∀ (f : α → β) (g : β → γ) (xs : List α), List.map g (List.map f xs) = List.map (g ∘ f) xs", "difficulty": 0.6, "priority": 0.8, "context": ["List"], "metadata": {"category": "hard", "topic": "list"}}
+{"id": "nat_le_refl", "goal": "∀ n : ℕ, n ≤ n", "difficulty": 0.1, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "order"}}
+{"id": "nat_le_trans", "goal": "∀ n m k : ℕ, n ≤ m → m ≤ k → n ≤ k", "difficulty": 0.4, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "order"}}
+{"id": "nat_le_antisymm", "goal": "∀ n m : ℕ, n ≤ m → m ≤ n → n = m", "difficulty": 0.4, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "order"}}
+{"id": "nat_lt_irrefl", "goal": "∀ n : ℕ, ¬(n < n)", "difficulty": 0.3, "priority": 0.6, "context": ["Nat"], "metadata": {"category": "medium", "topic": "order"}}
+{"id": "nat_lt_trans", "goal": "∀ n m k : ℕ, n < m → m < k → n < k", "difficulty": 0.4, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "order"}}
+{"id": "nat_lt_asymm", "goal": "∀ n m : ℕ, n < m → ¬(m < n)", "difficulty": 0.4, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "order"}}
+{"id": "nat_succ_pos", "goal": "∀ n : ℕ, 0 < n.succ", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "order"}}
+{"id": "nat_succ_ne_zero", "goal": "∀ n : ℕ, n.succ ≠ 0", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "order"}}
+{"id": "nat_pred_succ", "goal": "∀ n : ℕ, n.succ.pred = n", "difficulty": 0.2, "priority": 0.5, "context": ["Nat"], "metadata": {"category": "easy", "topic": "arithmetic"}}
+{"id": "nat_succ_pred", "goal": "∀ n : ℕ, 0 < n → n.pred.succ = n", "difficulty": 0.4, "priority": 0.7, "context": ["Nat"], "metadata": {"category": "medium", "topic": "arithmetic"}}
+{"id": "bool_not_not", "goal": "∀ b : Bool, not (not b) = b", "difficulty": 0.3, "priority": 0.6, "context": ["Bool"], "metadata": {"category": "medium", "topic": "bool"}}
+{"id": "bool_and_true", "goal": "∀ b : Bool, b && true = b", "difficulty": 0.2, "priority": 0.5, "context": ["Bool"], "metadata": {"category": "easy", "topic": "bool"}}
+{"id": "bool_true_and", "goal": "∀ b : Bool, true && b = b", "difficulty": 0.2, "priority": 0.5, "context": ["Bool"], "metadata": {"category": "easy", "topic": "bool"}}
+{"id": "bool_and_false", "goal": "∀ b : Bool, b && false = false", "difficulty": 0.2, "priority": 0.5, "context": ["Bool"], "metadata": {"category": "easy", "topic": "bool"}}
+{"id": "bool_false_and", "goal": "∀ b : Bool, false && b = false", "difficulty": 0.2, "priority": 0.5, "context": ["Bool"], "metadata": {"category": "easy", "topic": "bool"}}
+{"id": "bool_or_true", "goal": "∀ b : Bool, b || true = true", "difficulty": 0.2, "priority": 0.5, "context": ["Bool"], "metadata": {"category": "easy", "topic": "bool"}}
+{"id": "bool_true_or", "goal": "∀ b : Bool, true || b = true", "difficulty": 0.2, "priority": 0.5, "context": ["Bool"], "metadata": {"category": "easy", "topic": "bool"}}
+{"id": "bool_or_false", "goal": "∀ b : Bool, b || false = b", "difficulty": 0.2, "priority": 0.5, "context": ["Bool"], "metadata": {"category": "easy", "topic": "bool"}}
+{"id": "bool_false_or", "goal": "∀ b : Bool, false || b = b", "difficulty": 0.2, "priority": 0.5, "context": ["Bool"], "metadata": {"category": "easy", "topic": "bool"}}
+{"id": "bool_and_comm", "goal": "∀ a b : Bool, a && b = b && a", "difficulty": 0.3, "priority": 0.6, "context": ["Bool"], "metadata": {"category": "medium", "topic": "bool"}}
+{"id": "bool_or_comm", "goal": "∀ a b : Bool, a || b = b || a", "difficulty": 0.3, "priority": 0.6, "context": ["Bool"], "metadata": {"category": "medium", "topic": "bool"}}
+{"id": "bool_and_assoc", "goal": "∀ a b c : Bool, (a && b) && c = a && (b && c)", "difficulty": 0.4, "priority": 0.7, "context": ["Bool"], "metadata": {"category": "medium", "topic": "bool"}}
+{"id": "bool_or_assoc", "goal": "∀ a b c : Bool, (a || b) || c = a || (b || c)", "difficulty": 0.4, "priority": 0.7, "context": ["Bool"], "metadata": {"category": "medium", "topic": "bool"}}
+{"id": "list_filter_nil", "goal": "∀ α : Type, ∀ (p : α → Bool), List.filter p [] = []", "difficulty": 0.1, "priority": 0.5, "context": ["List"], "metadata": {"category": "easy", "topic": "list"}}
+{"id": "list_filter_append", "goal": "∀ α : Type, ∀ (p : α → Bool) (xs ys : List α), List.filter p (xs ++ ys) = List.filter p xs ++ List.filter p ys", "difficulty": 0.5, "priority": 0.7, "context": ["List"], "metadata": {"category": "medium", "topic": "list"}}
+{"id": "nat_distrib_left", "goal": "∀ n m k : ℕ, n * (m + k) = n * m + n * k", "difficulty": 0.6, "priority": 0.8, "context": ["Nat"], "metadata": {"category": "hard", "topic": "arithmetic"}}
+{"id": "nat_distrib_right", "goal": "∀ n m k : ℕ, (n + m) * k = n * k + m * k", "difficulty": 0.6, "priority": 0.8, "context": ["Nat"], "metadata": {"category": "hard", "topic": "arithmetic"}}
