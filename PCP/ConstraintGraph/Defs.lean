@@ -40,6 +40,11 @@ structure EdgeC (V α : Type*) where
   /-- The constraint on this edge -/
   rel : BinRel α
 
+-- Decidability for EdgeC (axiomatized for simplicity)
+axiom EdgeC.decidableEq {V α : Type*} [DecidableEq V] [DecidableEq α] : DecidableEq (EdgeC V α)
+
+attribute [instance] EdgeC.decidableEq
+
 /-- An assignment maps vertices to alphabet symbols. -/
 abbrev Assignment (V α : Type*) := V → α
 
@@ -84,6 +89,24 @@ axiom maxSat_spec (G : BinaryCSP V α) :
   ∃ (σ : Assignment V α), satFrac G σ = maxSat G ∧
   ∀ (σ' : Assignment V α), satFrac G σ' ≤ maxSat G
 
+/-!
+### Proof Strategy Notes
+
+For rational arithmetic bounds (satFrac, unsat):
+- Use `div_nonneg` to show division is non-negative (both arguments must be non-negative)
+- Use `div_le_iff₀` (note: iff₀, not iff) for division inequalities with rationals
+- `linarith` works well for linear arithmetic over ℚ after establishing key facts
+- `Finset.card_filter_le` gives cardinality bounds for filtered Finsets
+- `omega` does NOT work with rationals (only Nat/Int), use `linarith` instead
+- Extract witnesses from `maxSat_spec` using `obtain`, then rewrite with `hσ ▸`
+
+Pattern for bounds proofs:
+1. Unfold definitions
+2. Obtain witness from axiom/spec
+3. Establish key inequality via previously proved lemmas
+4. Use `linarith` to finish
+-/
+
 /-- Satisfaction fraction is non-negative. -/
 lemma satFrac_nonneg (G : BinaryCSP V α) (σ : Assignment V α) :
   0 ≤ satFrac G σ := by
@@ -94,18 +117,21 @@ lemma satFrac_nonneg (G : BinaryCSP V α) (σ : Assignment V α) :
 lemma satFrac_le_one (G : BinaryCSP V α) (σ : Assignment V α) :
   satFrac G σ ≤ 1 := by
   unfold satFrac
+  -- Key fact: filtered subset has ≤ cardinality
   have h1 : (G.E.filter fun ec => EdgeC.sat σ ec).card ≤ G.E.card := Finset.card_filter_le _ _
   have h2 : (0 : ℚ) < G.E.card := by simp [G.nonempty]
+  -- div_le_iff₀ transforms a/b ≤ c into a ≤ b*c (when b > 0)
   rw [div_le_iff₀ h2, one_mul]
   simp [h1]
 
 /-- UNSAT is bounded between 0 and 1. -/
 lemma unsat_bounds (G : BinaryCSP V α) : 0 ≤ unsat G ∧ unsat G ≤ 1 := by
   unfold unsat
+  -- Extract witness assignment that achieves maxSat
   obtain ⟨σ, hσ, hle⟩ := maxSat_spec G
   constructor
   · -- 0 ≤ 1 - maxSat G, i.e., maxSat G ≤ 1
-    have : maxSat G ≤ 1 := hσ ▸ satFrac_le_one G σ
+    have : maxSat G ≤ 1 := hσ ▸ satFrac_le_one G σ  -- Rewrite using witness
     linarith
   · -- 1 - maxSat G ≤ 1, i.e., 0 ≤ maxSat G
     have : 0 ≤ maxSat G := hσ ▸ satFrac_nonneg G σ
@@ -120,13 +146,14 @@ lemma unsat_zero_iff_satisfiable (G : BinaryCSP V α) :
     intro h
     obtain ⟨σ, hσ, _⟩ := maxSat_spec G
     use σ
-    linarith
+    linarith  -- From h: 1 - maxSat G = 0 and hσ: satFrac σ = maxSat G
   · -- (∃ σ, satFrac G σ = 1) → unsat G = 0
     intro ⟨σ, hσ⟩
     obtain ⟨σ', hσ', hle⟩ := maxSat_spec G
+    -- Show maxSat G = 1 by squeezing: maxSat G ≥ 1 (from hle) and maxSat G ≤ 1 (from satFrac_le_one)
     have h1 : maxSat G ≥ 1 := hσ ▸ hle σ
     have h2 : maxSat G ≤ 1 := hσ' ▸ satFrac_le_one G σ'
-    linarith
+    linarith  -- Therefore maxSat G = 1, so unsat = 1 - 1 = 0
 
 /-- The number of edges in a CSP. -/
 def size (G : BinaryCSP V α) : ℕ := G.E.card

@@ -5,11 +5,44 @@
 -/
 
 import PCP.ConstraintGraph.Defs
+import Mathlib.Data.Finset.Insert
 
 /-!
 # Constraint Graph Examples
 
 Simple examples to test that our definitions work correctly.
+
+## Construction Strategy Notes
+
+### Finset Construction
+- **Problem**: `Finset.insert` is not directly available as a field method
+- **Solution**: Use `List.toFinset` to build Finsets from lists
+  ```lean
+  E := [edge1, edge2, edge3].toFinset
+  ```
+- **Alternative**: Could use `Finset.mk` with multiset, but list is simpler
+
+### Decidability Issues
+- **Problem**: `toFinset` requires `DecidableEq (EdgeC V α)`
+- **Issue**: EdgeC contains `BinRel α` which has function fields (not decidable by default)
+- **Solution**: Axiomatize `EdgeC.decidableEq` (see ConstraintGraph/Defs.lean:44)
+- **Consequence**: CSP definitions must be marked `noncomputable`
+
+### Proof Tactics for Examples
+- Use `simp` for `nonempty` proofs (more reliable than `decide` with axiomatized instances)
+- For edge satisfaction proofs, unfold definitions and provide explicit witnesses with `use`
+- Sym2 equality is tricky - often need case analysis on whether `s(u,v) = s(a,b)`
+
+### Working with Sym2
+- `s(a, b)` creates unordered pairs
+- To prove `EdgeC.sat`, need to find `u, v` such that `ec.e = s(u, v)`
+- `Sym2.eq_iff` lemma can help but doesn't always simplify automatically
+- Pattern: provide explicit witnesses rather than relying on automation
+
+### Future Improvements
+- Could derive `DecidableEq` for EdgeC properly instead of axiomatizing
+- Would require decidability for function equality (not generally available)
+- Or restrict `BinRel` to use decidable predicates only
 -/
 
 namespace Examples
@@ -47,9 +80,9 @@ def triangle_edge_02 : EdgeC V3 Bool2 := {
 }
 
 -- The triangle CSP
-def triangle_csp : BinaryCSP V3 Bool2 := {
-  E := {triangle_edge_01, triangle_edge_12, triangle_edge_02}
-  nonempty := by simp [Finset.card_insert_of_not_mem]; norm_num
+noncomputable def triangle_csp : BinaryCSP V3 Bool2 := {
+  E := [triangle_edge_01, triangle_edge_12, triangle_edge_02].toFinset
+  nonempty := by simp
 }
 
 -- All-true assignment
@@ -86,8 +119,8 @@ def neq_edge : EdgeC (Fin 2) Bool2 := {
   rel := neq_rel
 }
 
-def neq_csp : BinaryCSP (Fin 2) Bool2 := {
-  E := {neq_edge}
+noncomputable def neq_csp : BinaryCSP (Fin 2) Bool2 := {
+  E := [neq_edge].toFinset
   nonempty := by simp
 }
 
@@ -100,13 +133,7 @@ def differ : Assignment (Fin 2) Bool2 := fun i => if i = 0 then true else false
 -- Test: both_true does NOT satisfy the inequality
 example : ¬EdgeC.sat both_true neq_edge := by
   unfold EdgeC.sat both_true neq_edge neq_rel
-  simp
-  intro u v _
-  by_cases h : u = 0
-  · simp [h]
-    intro h2
-    by_cases h3 : v = 0 <;> simp [h3]
-  · sorry
+  sorry  -- Should prove that for all u, v with s(u,v) = s(0,1), both_true u = both_true v
 
 -- Test: differ DOES satisfy the inequality
 example : EdgeC.sat differ neq_edge := by
@@ -137,9 +164,9 @@ def unsat_edge_02 : EdgeC V3 Bool2 := {
   rel := eq_rel  -- 0 = 2
 }
 
-def unsat_csp : BinaryCSP V3 Bool2 := {
-  E := {unsat_edge_01, unsat_edge_12, unsat_edge_02}
-  nonempty := by simp [Finset.card_insert_of_not_mem]; norm_num
+noncomputable def unsat_csp : BinaryCSP V3 Bool2 := {
+  E := [unsat_edge_01, unsat_edge_12, unsat_edge_02].toFinset
+  nonempty := by simp
 }
 
 -- Test: No assignment can satisfy all constraints

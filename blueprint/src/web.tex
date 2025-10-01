@@ -40,6 +40,65 @@
 
 \maketitle
 
+\section*{Overview}
+
+This blueprint documents the formalization of the PCP Theorem (\textbf{NP = PCP(log n, 1)}) in Lean 4, following Irit Dinur's gap amplification proof.
+
+\subsection*{What is the PCP Theorem?}
+
+The Probabilistically Checkable Proof (PCP) Theorem states that every problem in NP has a proof system where:
+\begin{itemize}
+\item The verifier uses $O(\log n)$ random bits
+\item The verifier queries only $O(1)$ bits of the proof
+\item Completeness: correct statements have proofs accepted with probability 1
+\item Soundness: incorrect statements are rejected with high probability
+\end{itemize}
+
+This remarkable result connects computational complexity to hardness of approximation and has profound implications for optimization problems.
+
+\subsection*{Our Approach}
+
+We formalize Dinur's proof via gap amplification on constraint graphs:
+
+\begin{enumerate}
+\item \textbf{Start:} NP-complete problem (SAT) encoded as constraint satisfaction
+\item \textbf{Iterate:} Apply graph powering + composition to amplify the gap
+\item \textbf{Result:} Constant-gap CSP, which gives PCP(log n, 1)
+\end{enumerate}
+
+\subsection*{Blueprint Structure}
+
+The formalization is organized into 6 work packages (45 nodes total):
+
+\begin{description}
+\item[WP-A: Foundations] Core PCP definitions, languages, complexity classes
+\item[WP-B: Expanders \& Preprocessing] Spectral graph theory, expander constructions
+\item[WP-C: Powering] Graph powering that amplifies UNSAT gap by $\sim\sqrt{t}$
+\item[WP-D: Assignment Testers] Long codes and linearity testing
+\item[WP-E: Amplification Main] Combining all pieces into Dinur's main theorem
+\item[WP-F: Equivalences \& Endgame] Final reduction from SAT to PCP
+\end{description}
+
+\subsection*{Status \& Progress}
+
+\begin{itemize}
+\item \textbf{Total LOC estimate:} $\sim$7,350 lines
+\item \textbf{Current status:} Planning phase (all nodes in \texttt{planned} state)
+\item \textbf{Repository:} \url{https://github.com/jalex-stark/pcp-rpg}
+\item \textbf{Interactive graph:} Run \texttt{make graph} to visualize dependencies
+\end{itemize}
+
+\subsection*{Navigation}
+
+Use the table of contents above or the sidebar to navigate to specific work packages. Each theorem/lemma includes:
+\begin{itemize}
+\item Lean signature and file path
+\item Difficulty rating (1-5 stars)
+\item Estimated lines of code
+\item Dependencies (\texttt{uses} clauses)
+\item References to Dinur's paper
+\end{itemize}
+
 \tableofcontents
 
 \input{content.tex}
