@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Orchestrator wrapper script - uses Python 3.13 venv for general orchestrator commands
+# For LeanDojo commands, use bin/orch-lean instead
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Activate Python 3.13 environment
+source "$REPO_ROOT/.venv/bin/activate"
+
+# Set GitHub token if available
+if command -v gh &> /dev/null; then
+    export GITHUB_ACCESS_TOKEN=$(gh auth token 2>/dev/null || echo "")
+fi
+
+# Run orchestrator main
+exec python -m orchestrator.main "$@"

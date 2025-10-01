@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Orchestrator wrapper script with LeanDojo support - uses Python 3.12 venv
+# This is the full-featured version with real Lean integration
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Check if Python 3.12 venv exists
+if [ ! -d "$REPO_ROOT/.venv-lean" ]; then
+    echo "Error: Python 3.12 environment not found at .venv-lean"
+    echo "Run: make orch-lean-init"
+    exit 1
+fi
+
+# Activate Python 3.12 environment
+source "$REPO_ROOT/.venv-lean/bin/activate"
+
+# Set GitHub token (required by LeanDojo)
+if command -v gh &> /dev/null; then
+    export GITHUB_ACCESS_TOKEN=$(gh auth token 2>/dev/null || echo "")
+fi
+
+if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
+    echo "Warning: GITHUB_ACCESS_TOKEN not set. LeanDojo may fail."
+    echo "Set it with: export GITHUB_ACCESS_TOKEN=\$(gh auth token)"
+fi
+
+# Run orchestrator main
+exec python -m orchestrator.main "$@"

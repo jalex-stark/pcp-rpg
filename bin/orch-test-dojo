@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# Test LeanDojo integration
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Activate Python 3.12 environment
+source "$REPO_ROOT/.venv-lean/bin/activate"
+
+# Set GitHub token
+if command -v gh &> /dev/null; then
+    export GITHUB_ACCESS_TOKEN=$(gh auth token 2>/dev/null || echo "")
+fi
+
+# Run Python test
+python3 << 'PYTHON_SCRIPT'
+import asyncio
+import sys
+import os
+
+# Add repo root to path
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, REPO_ROOT)
+
+async def test_dojo():
+    """Test DojoWrapper with a simple example."""
+    print("Testing LeanDojo integration...")
+    print(f"Python version: {sys.version}")
+
+    try:
+        from orchestrator.workers.dojo import DojoWrapper, HAS_LEANDOJO
+
+        if not HAS_LEANDOJO:
+            print("❌ LeanDojo not installed in this environment")
+            print("Run: source .venv-lean/bin/activate && pip install lean-dojo")
+            return False
+
+        print("✓ LeanDojo imported successfully")
+
+        # Try to initialize wrapper
+        print("\nInitializing DojoWrapper...")
+        dojo = DojoWrapper(repo_path=".", commit="HEAD")
+        print("✓ DojoWrapper initialized")
+
+        print("\n✓ LeanDojo integration is ready!")
+        print("\nTo test with a real theorem:")
+        print("1. Create a test theorem in PCP.lean")
+        print("2. Run this script with GITHUB_ACCESS_TOKEN set")
+
+        return True
+
+    except ImportError as e:
+        print(f"❌ Import error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+if __name__ == "__main__":
+    success = asyncio.run(test_dojo())
+    sys.exit(0 if success else 1)
+PYTHON_SCRIPT

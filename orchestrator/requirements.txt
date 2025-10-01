@@ -6,8 +6,10 @@ psutil>=5.9.0
 fastapi>=0.104.0
 uvicorn>=0.24.0
 
-# Future: LeanDojo integration (uncomment when ready)
-# lean-dojo>=1.0.0
+# LeanDojo integration (requires elan, git 2.25+, Python 3.9-3.12)
+# Note: Python 3.13+ not supported yet - use Python 3.12 or earlier
+# Install separately: python3.12 -m pip install lean-dojo>=2.0.0
+# lean-dojo>=2.0.0; python_version<'3.13'
 
 # Future: ReProver dependencies (uncomment for Profile 2)
 # torch>=2.0.0

@@ -1,114 +1,339 @@
 """
 LeanDojo integration: unified verifier for all strategies.
 
-Provides a clean interface to run tactics and check proofs.
+Provides a clean interface to run tactics and check proofs using LeanDojo.
 """
 
 import asyncio
-from typing import Optional
-from dataclasses import dataclass
+import os
+from pathlib import Path
+from typing import Optional, Union
+from dataclasses import dataclass, field
+
+try:
+    from lean_dojo import (
+        Dojo,
+        LeanGitRepo,
+        Theorem,
+        TacticState,
+        ProofFinished,
+        LeanError,
+        ProofGivenUp,
+        DojoCrashError,
+        DojoInitError,
+        DojoTacticTimeoutError,
+    )
+    HAS_LEANDOJO = True
+except ImportError:
+    HAS_LEANDOJO = False
+    # Stubs for type hints when LeanDojo not installed
+    Dojo = None
+    LeanGitRepo = None
+    Theorem = None
+    TacticState = None
+    ProofFinished = None
+    LeanError = None
+    ProofGivenUp = None
 
 
 @dataclass
 class DojoResult:
     """Result from running a tactic in Lean."""
     success: bool
-    new_goals: list[str] = None
+    new_goals: list[str] = field(default_factory=list)
+    proof_finished: bool = False
     error: Optional[str] = None
+    tactic_state_id: Optional[int] = None
 
 
 class DojoWrapper:
     """
     Wrapper around LeanDojo for tactic execution.
 
-    This is a stub. In production, this would:
-    1. Use lean_dojo.Dojo to interact with Lean
-    2. Maintain session state
-    3. Handle timeouts and cancellation
-    4. Cache proof states
+    Provides a clean async interface for running tactics and checking proofs.
+    Handles initialization, state management, and error handling.
     """
 
-    def __init__(self, repo_path: str, cache_dir: Optional[str] = None):
+    def __init__(
+        self,
+        repo_path: str = ".",
+        commit: str = "HEAD",
+        timeout: int = 600,
+        num_procs: Optional[int] = None,
+    ):
         """
         Initialize Dojo wrapper.
 
         Args:
-            repo_path: Path to Lean project
-            cache_dir: Path to LeanDojo cache (default: ~/.cache/lean_dojo)
+            repo_path: Path to Lean project (or URL for git repo)
+            commit: Git commit hash (default: HEAD for local repos)
+            timeout: Max seconds for Dojo operations
+            num_procs: Number of parallel processes (default: auto)
         """
-        self.repo_path = repo_path
-        self.cache_dir = cache_dir
-        # self.dojo = None  # Would be lean_dojo.Dojo instance
+        if not HAS_LEANDOJO:
+            raise ImportError(
+                "lean-dojo not installed. Install with: pip install lean-dojo"
+            )
 
-    async def run_tac(self, goal_id: str, tactic: str, timeout: float = 10.0) -> DojoResult:
+        self.repo_path = Path(repo_path).resolve()
+        self.commit = commit
+        self.timeout = timeout
+
+        # Set LeanDojo env vars if provided
+        if num_procs:
+            os.environ['LEANDOJO_NUM_PROCS'] = str(num_procs)
+
+        # Initialize repo
+        if self.repo_path.is_dir():
+            # Local repository
+            self.repo = LeanGitRepo(str(self.repo_path), commit)
+        else:
+            # Remote repository (URL)
+            self.repo = LeanGitRepo(repo_path, commit)
+
+        # Cache for Dojo instances (theorem → dojo)
+        self._dojo_cache = {}
+
+    async def run_tac(
+        self,
+        theorem_file: str,
+        theorem_name: str,
+        state: Union[TacticState, int],
+        tactic: str,
+        tactic_timeout: float = 10.0,
+    ) -> DojoResult:
         """
-        Run a tactic on a goal.
+        Run a tactic on a proof state.
 
         Args:
-            goal_id: Goal identifier
+            theorem_file: Path to Lean file (relative to repo root)
+            theorem_name: Name of theorem
+            state: TacticState or state_id (0 for initial)
             tactic: Tactic string to execute
-            timeout: Max seconds to wait
+            tactic_timeout: Max seconds for this tactic
 
         Returns:
             DojoResult with success status and new goals
         """
-        # Stub implementation
-        await asyncio.sleep(0.1)
+        try:
+            # Get or create Dojo for this theorem
+            cache_key = (theorem_file, theorem_name)
+            if cache_key not in self._dojo_cache:
+                theorem = Theorem(self.repo, theorem_file, theorem_name)
+                dojo_ctx = Dojo(theorem, timeout=self.timeout)
+                dojo, init_state = dojo_ctx.__enter__()
+                self._dojo_cache[cache_key] = (dojo_ctx, dojo, init_state)
+            else:
+                dojo_ctx, dojo, init_state = self._dojo_cache[cache_key]
 
-        # Simulate tactic execution
-        # In real implementation:
-        # result = await self.dojo.run_tac(state, tactic)
-        # return DojoResult(
-        #     success=len(result.goals) == 0,
-        #     new_goals=[str(g) for g in result.goals],
-        # )
+            # Get current state
+            if isinstance(state, int):
+                if state == 0:
+                    current_state = init_state
+                else:
+                    # Would need to track state history
+                    raise ValueError("State tracking not implemented for state_id")
+            else:
+                current_state = state
 
-        return DojoResult(
-            success=True,
-            new_goals=[],
-        )
+            # Run tactic with timeout
+            result = await asyncio.wait_for(
+                asyncio.to_thread(dojo.run_tac, current_state, tactic),
+                timeout=tactic_timeout,
+            )
 
-    async def check_proof(self, proof_script: str, timeout: float = 30.0) -> bool:
+            # Parse result
+            if isinstance(result, ProofFinished):
+                return DojoResult(
+                    success=True,
+                    new_goals=[],
+                    proof_finished=True,
+                    tactic_state_id=result.tactic_state_id,
+                )
+            elif isinstance(result, TacticState):
+                # Extract goals from proof state
+                goals = self._extract_goals(result.pp)
+                return DojoResult(
+                    success=True,
+                    new_goals=goals,
+                    proof_finished=False,
+                    tactic_state_id=result.id,
+                )
+            elif isinstance(result, (LeanError, ProofGivenUp)):
+                return DojoResult(
+                    success=False,
+                    error=str(result.message) if hasattr(result, 'message') else str(result),
+                )
+            else:
+                return DojoResult(
+                    success=False,
+                    error=f"Unknown result type: {type(result)}",
+                )
+
+        except asyncio.TimeoutError:
+            return DojoResult(success=False, error="Tactic timeout")
+        except (DojoCrashError, DojoInitError, DojoTacticTimeoutError) as e:
+            return DojoResult(success=False, error=f"Dojo error: {e}")
+        except Exception as e:
+            return DojoResult(success=False, error=f"Unexpected error: {e}")
+
+    async def check_proof(
+        self,
+        theorem_file: str,
+        theorem_name: str,
+        proof_script: str,
+        timeout: float = 30.0,
+    ) -> bool:
         """
         Check if a complete proof script is valid.
 
+        Runs the entire proof script tactic-by-tactic.
+
         Args:
-            proof_script: Complete Lean proof
+            theorem_file: Path to Lean file
+            theorem_name: Name of theorem
+            proof_script: Complete proof (tactics separated by newlines or semicolons)
             timeout: Max seconds to check
 
         Returns:
             True if proof is valid
         """
-        # Stub implementation
-        await asyncio.sleep(0.2)
+        # Split proof into tactics
+        tactics = self._split_proof(proof_script)
 
-        # In real implementation:
-        # result = await self.dojo.run_proof(proof_script)
-        # return result.is_valid
+        try:
+            # Get initial state
+            cache_key = (theorem_file, theorem_name)
+            if cache_key not in self._dojo_cache:
+                theorem = Theorem(self.repo, theorem_file, theorem_name)
+                dojo_ctx = Dojo(theorem, timeout=self.timeout)
+                dojo, init_state = dojo_ctx.__enter__()
+                self._dojo_cache[cache_key] = (dojo_ctx, dojo, init_state)
+            else:
+                dojo_ctx, dojo, init_state = self._dojo_cache[cache_key]
 
-        return True
+            # Run tactics sequentially
+            current_state = init_state
+            for tactic in tactics:
+                if not tactic.strip():
+                    continue
+
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(dojo.run_tac, current_state, tactic),
+                    timeout=timeout / len(tactics),
+                )
+
+                if isinstance(result, ProofFinished):
+                    return True  # Proof complete!
+                elif isinstance(result, TacticState):
+                    current_state = result  # Continue from new state
+                else:
+                    return False  # Error
+
+            return False  # Ran out of tactics without finishing
+
+        except Exception as e:
+            print(f"Proof check error: {e}")
+            return False
+
+    def _extract_goals(self, pp: str) -> list[str]:
+        """
+        Extract individual goals from pretty-printed proof state.
+
+        Args:
+            pp: Pretty-printed state (from TacticState.pp)
+
+        Returns:
+            List of goal strings
+        """
+        # Simple heuristic: goals separated by "case" or double newline
+        # In reality, LeanDojo's pp format is more complex
+        if not pp:
+            return []
+
+        # Split by goal separator (⊢)
+        parts = pp.split('⊢')
+        if len(parts) <= 1:
+            return [pp.strip()] if pp.strip() else []
+
+        goals = []
+        for i in range(1, len(parts)):
+            # Goal is context + ⊢ + target
+            target = parts[i].split('\n')[0].strip()
+            goals.append(target)
+
+        return goals
+
+    def _split_proof(self, proof_script: str) -> list[str]:
+        """
+        Split proof script into individual tactics.
+
+        Args:
+            proof_script: Complete proof
+
+        Returns:
+            List of tactic strings
+        """
+        # Handle different separators
+        # Simple version: split by newlines or semicolons
+        script = proof_script.strip()
+
+        # Remove "by" prefix if present
+        if script.startswith('by'):
+            script = script[2:].strip()
+
+        # Split by newlines first
+        lines = script.split('\n')
+
+        tactics = []
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith('--'):  # Skip comments
+                continue
+
+            # Split by semicolons
+            parts = [p.strip() for p in line.split(';')]
+            tactics.extend(p for p in parts if p)
+
+        return tactics
+
+    def close(self):
+        """Close all cached Dojo instances."""
+        for cache_key, (dojo_ctx, dojo, init_state) in self._dojo_cache.items():
+            try:
+                dojo_ctx.__exit__(None, None, None)
+            except Exception as e:
+                print(f"Error closing Dojo for {cache_key}: {e}")
+
+        self._dojo_cache.clear()
+
+    def __del__(self):
+        """Cleanup on deletion."""
+        self.close()
 
 
-# Real implementation would look like:
-#
-# from lean_dojo import Dojo, LeanGitRepo
-#
-# class DojoWrapper:
-#     def __init__(self, repo_path: str, cache_dir: Optional[str] = None):
-#         self.repo = LeanGitRepo(repo_path)
-#         self.cache_dir = cache_dir or os.path.expanduser("~/.cache/lean_dojo")
-#
-#     async def run_tac(self, goal_id: str, tactic: str, timeout: float = 10.0):
-#         with Dojo(self.repo, cache_dir=self.cache_dir) as dojo:
-#             state = dojo.get_state(goal_id)
-#             try:
-#                 result = await asyncio.wait_for(
-#                     dojo.run_tac(state, tactic),
-#                     timeout=timeout
-#                 )
-#                 return DojoResult(
-#                     success=len(result.goals) == 0,
-#                     new_goals=[str(g) for g in result.goals],
-#                 )
-#             except asyncio.TimeoutError:
-#                 return DojoResult(success=False, error="timeout")
+# Convenience function for simple use cases
+async def run_tactic_simple(
+    tactic: str,
+    theorem_file: str = "PCP.lean",
+    theorem_name: str = "test_theorem",
+    repo_path: str = ".",
+) -> DojoResult:
+    """
+    Simple interface to run a single tactic.
+
+    Args:
+        tactic: Tactic to run
+        theorem_file: Lean file
+        theorem_name: Theorem name
+        repo_path: Repository path
+
+    Returns:
+        DojoResult
+    """
+    dojo = DojoWrapper(repo_path)
+    try:
+        result = await dojo.run_tac(theorem_file, theorem_name, 0, tactic)
+        return result
+    finally:
+        dojo.close()

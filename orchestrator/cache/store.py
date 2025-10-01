@@ -64,12 +64,14 @@ class Ledger:
                 subgoals TEXT,  -- JSON array
                 error TEXT,
                 metadata TEXT,  -- JSON
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_goal_hash (goal_hash),
-                INDEX idx_strategy (strategy),
-                INDEX idx_success (success)
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Create indexes separately
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_goal_hash ON attempts(goal_hash)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_strategy ON attempts(strategy)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_success ON attempts(success)")
 
         # Tactic cache table
         cursor.execute("""
@@ -92,10 +94,11 @@ class Ledger:
                 goal_hash TEXT NOT NULL,
                 premises TEXT NOT NULL,  -- JSON array
                 score REAL NOT NULL,
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_goal_hash_premise (goal_hash)
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_goal_hash_premise ON premise_cache(goal_hash)")
 
         self.conn.commit()
 
