@@ -367,6 +367,47 @@
         svg.transition().call(zoom.transform, d3.zoomIdentity);
     });
 
+    // WASD keyboard navigation
+    const panSpeed = 50; // pixels per keypress
+
+    document.addEventListener('keydown', (event) => {
+        // Don't pan if user is typing in search box
+        if (event.target.tagName === 'INPUT') return;
+
+        const currentTransform = d3.zoomTransform(svg.node());
+        let dx = 0, dy = 0;
+
+        switch(event.key.toLowerCase()) {
+            case 'w':
+            case 'arrowup':
+                dy = panSpeed;
+                event.preventDefault();
+                break;
+            case 's':
+            case 'arrowdown':
+                dy = -panSpeed;
+                event.preventDefault();
+                break;
+            case 'a':
+            case 'arrowleft':
+                dx = panSpeed;
+                event.preventDefault();
+                break;
+            case 'd':
+            case 'arrowright':
+                dx = -panSpeed;
+                event.preventDefault();
+                break;
+        }
+
+        if (dx !== 0 || dy !== 0) {
+            const newTransform = currentTransform.translate(dx, dy);
+            svg.transition()
+                .duration(200)
+                .call(zoom.transform, newTransform);
+        }
+    });
+
     // Panel minimize functionality
     const legendMinimize = document.getElementById('legend-minimize');
     const statsMinimize = document.getElementById('stats-minimize');
