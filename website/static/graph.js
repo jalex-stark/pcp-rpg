@@ -368,45 +368,47 @@
     });
 
     // WASD keyboard navigation
-    const panSpeed = 50; // pixels per keypress
+    const panSpeed = 100; // pixels per keypress
+    let keysPressed = new Set();
 
+    // Track key down for smooth continuous panning
     document.addEventListener('keydown', (event) => {
         // Don't pan if user is typing in search box
         if (event.target.tagName === 'INPUT') return;
 
-        const currentTransform = d3.zoomTransform(svg.node());
-        let dx = 0, dy = 0;
-
-        switch(event.key.toLowerCase()) {
-            case 'w':
-            case 'arrowup':
-                dy = panSpeed;
-                event.preventDefault();
-                break;
-            case 's':
-            case 'arrowdown':
-                dy = -panSpeed;
-                event.preventDefault();
-                break;
-            case 'a':
-            case 'arrowleft':
-                dx = panSpeed;
-                event.preventDefault();
-                break;
-            case 'd':
-            case 'arrowright':
-                dx = -panSpeed;
-                event.preventDefault();
-                break;
-        }
-
-        if (dx !== 0 || dy !== 0) {
-            const newTransform = currentTransform.translate(dx, dy);
-            svg.transition()
-                .duration(200)
-                .call(zoom.transform, newTransform);
+        const key = event.key.toLowerCase();
+        if (['w', 's', 'a', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+            event.preventDefault();
+            keysPressed.add(key);
         }
     });
+
+    document.addEventListener('keyup', (event) => {
+        const key = event.key.toLowerCase();
+        keysPressed.delete(key);
+    });
+
+    // Smooth animation loop for continuous panning
+    function animatePanning() {
+        if (keysPressed.size > 0) {
+            const currentTransform = d3.zoomTransform(svg.node());
+            let dx = 0, dy = 0;
+
+            if (keysPressed.has('w') || keysPressed.has('arrowup')) dy = panSpeed;
+            if (keysPressed.has('s') || keysPressed.has('arrowdown')) dy = -panSpeed;
+            if (keysPressed.has('a') || keysPressed.has('arrowleft')) dx = panSpeed;
+            if (keysPressed.has('d') || keysPressed.has('arrowright')) dx = -panSpeed;
+
+            if (dx !== 0 || dy !== 0) {
+                const newTransform = currentTransform.translate(dx, dy);
+                svg.call(zoom.transform, newTransform);
+            }
+        }
+        requestAnimationFrame(animatePanning);
+    }
+
+    // Start the animation loop
+    animatePanning();
 
     // Panel minimize functionality
     const legendMinimize = document.getElementById('legend-minimize');
