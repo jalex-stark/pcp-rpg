@@ -1,0 +1,31 @@
+{
+  "timestamp": "20251001-231611",
+  "goals_total": 64,
+  "goals_processed": 64,
+  "goals_solved": 8,
+  "strategies": {
+    "StrategyType.MICRO": {
+      "used": 64,
+      "succeeded": 8
+    },
+    "StrategyType.COPILOT": {
+      "used": 64,
+      "succeeded": 0
+    },
+    "StrategyType.REPROVER": {
+      "used": 0,
+      "succeeded": 0
+    },
+    "StrategyType.SKETCH": {
+      "used": 64,
+      "succeeded": 0
+    }
+  },
+  "config": {
+    "timeout": 10,
+    "max_heavy": 2,
+    "max_light": 8,
+    "cpu_target": 0.5,
+    "profile": 1
+  }
+}

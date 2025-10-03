@@ -319,25 +319,54 @@ Diff: ★★☆☆☆.
 Deps: A1, F3, NP‑completeness.
 
 5) Missing / weak mathlib4 dependencies (and milestones)
+
+5.1) AVAILABLE in mathlib4 (use these)
+
+Graph infrastructure:
+- Mathlib.Combinatorics.SimpleGraph.Basic - graph adjacency, walks, degrees, subgraphs
+- Mathlib.Combinatorics.SimpleGraph.AdjMatrix - adjacency matrices, "Aⁿ counts n-walks" theorem
+- Mathlib.Combinatorics.SimpleGraph.DegreeSum - degree properties
+- Mathlib.Combinatorics.SimpleGraph.Maps - graph homomorphisms
+
+Linear algebra / spectral theory (general):
+- LinearAlgebra.Matrix.spectrum - matrix eigenvalues
+- Analysis.InnerProductSpace.spectrum - spectral theorem for self-adjoint operators
+- LinearAlgebra.Eigenspace - eigenspace decomposition
+
+Probability foundations:
+- Mathlib.Probability.Kernel.Defs - probability kernels, IsFiniteKernel
+- probability.* - measure theory, conditional probability, martingales, variance
+- Use for: general Markov chain machinery (transition kernels, finite-state chains)
+
+Note: mathlib has general probability/Markov infrastructure but NOT graph-specific random walks. You'll need to bridge SimpleGraph to Markov kernels for walk distributions.
+
+5.2) MISSING / to be built
+
 Expander graphs (explicit family, combinatorial expansion h(G) ≥ h0).
 Needed for C1/C2.
-Plan: Formalize zig‑zag product (Reingold–Vadhan–Wigderson) or adopt a “black‑box expander family” interface ExpanderFamily with a placeholder instance, then fill with zig‑zag in a separate mini‑project.
-Milestone: Expander.Basic: definitions, existence lemma ∃ d0 h0, explicit family. 
+Plan: Formalize zig‑zag product (Reingold–Vadhan–Wigderson) or adopt a "black‑box expander family" interface ExpanderFamily with a placeholder instance, then fill with zig‑zag in a separate mini‑project.
+Milestone: Expander.Basic: definitions, existence lemma ∃ d0 h0, explicit family.
 Weizmann Institute of Science - Wisdom
 
 Difficulty: ★★★★☆.
 
-Spectral graph theory primitives.
+Graph Laplacian.
+NOT in mathlib4 (as of Jan 2025).
+Plan: Define L = D - A using existing SimpleGraph.adjMatrix and degree matrix. Connect to eigenvalues.
+Difficulty: ★★☆☆☆.
+
+Spectral graph theory (Cheeger bounds, mixing).
 Needed for C2 and D2.
-Plan: Add: adjacency matrix of SimpleGraph, Rayleigh quotient, bound λ₁ ≤ d − h^2/(2d) as in Dinur Theorem 2.3 (p. 8). Use what’s already in mathlib4 linear algebra; extend as necessary. 
+Plan: Build on mathlib4's LinearAlgebra.Matrix.spectrum and SimpleGraph.AdjMatrix. Add: Rayleigh quotient for graphs, bound λ₁ ≤ d − h²/(2d) as in Dinur Theorem 2.3 (p. 8), spectral gap definition.
 Weizmann Institute of Science - Wisdom
 
 Difficulty: ★★★★★.
 
-Random walks / mixing on regular graphs (finite Markov chains).
+Random walks on graphs (finite, spectral mixing bounds).
 Needed for D2.
-Plan: Non‑measure‑theoretic approach via counting on Finset and spectral bounds; state walk_distribution as uniform over t‑step neighbors; bound bias using eigenvalues.
+Plan: Bridge SimpleGraph.AdjMatrix to Probability.Kernel infrastructure. Define walk distribution over t-step neighbors using matrix powers. Prove mixing lemmas: bias bounds from eigenvalues (avoid heavy measure theory; use counting on Finset).
 Difficulty: ★★★★☆.
+Dependencies: Graph Laplacian, spectral bounds, mathlib4 Markov kernels.
 
 Coding theory basics.
 Needed for E2/E3.

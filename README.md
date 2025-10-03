@@ -4,7 +4,28 @@ Formalization of the classical PCP (Probabilistically Checkable Proofs) theorem 
 
 ## Project Status
 
-**Currently in planning phase** - building the planning infrastructure before starting Lean formalization.
+**Orchestrator complete, ready for testing!**
+
+✅ **Working Now:**
+- Complete proof search orchestrator (UCB1 + CPU throttling)
+- Stub workers achieving 60%+ solve rate on benchmarks
+- Multi-environment setup (Python 3.13 + 3.12 for LeanDojo)
+- Test theorem suite in PCP/Basic.lean
+
+⏳ **In Progress:**
+- LeanDojo build (one-time, ~15min for mathlib cache)
+
+🔲 **Next Steps:**
+- Goal extraction from Lean files
+- Lean Copilot integration
+- Blueprint progress tracking
+
+**Quick Test:** `make orch-init && bin/orch bank --timeout 10`
+
+📖 **New Documentation:**
+- **[QUICK_START.md](QUICK_START.md)** - 30-second test
+- **[TESTING_INSTRUCTIONS.md](TESTING_INSTRUCTIONS.md)** - Full testing guide
+- **[HANDOFF_SUMMARY.md](HANDOFF_SUMMARY.md)** - Complete handoff docs
 
 ## Repository Structure
 

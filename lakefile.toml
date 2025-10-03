@@ -13,7 +13,14 @@ maxSynthPendingDepth = 3
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.15.0"
+rev = "v4.23.0"
+# Use latest mathlib compatible with Lean 4.23.0
+
+[[require]]
+name = "LeanCopilot"
+git = "https://github.com/lean-dojo/LeanCopilot.git"
+rev = "v4.23.0"
 
 [[lean_lib]]
 name = "PCP"
+moreLinkArgs = ["-L./.lake/packages/LeanCopilot/.lake/build/lib", "-lctranslate2"]

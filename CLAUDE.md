@@ -121,6 +121,8 @@ The Lean 4 project is now initialized with mathlib4 dependency. You can:
 3. **Add new Lean files**: Create files under `PCP/` directory
 4. **Import mathlib**: Use `import Mathlib.Path.To.Module` in your files
 
+**Note on `lake` commands**: If `lake` is not in your PATH or you encounter command-not-found errors, use the full path: `~/.elan/bin/lake build`, `~/.elan/bin/lake update`, etc. This is especially common in non-interactive shells or CI environments where elan's PATH modifications aren't applied.
+
 ### Planned Development Workflow
 
 For future automation:

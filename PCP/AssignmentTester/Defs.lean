@@ -44,7 +44,26 @@ variable (P : AssignmentTester)
 ## Composition Reduces Alphabet
 
 Composing CSP with assignment tester preserves UNSAT while reducing alphabet.
+
+The key insight: Replace each long assignment (from large alphabet α) with
+a short assignment (from small alphabet Σ₀) plus a local tester that verifies
+consistency.
 -/
+
+/-- Completeness: If the original CSP is satisfiable, so is the composed one. -/
+lemma composition_completeness {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
+    (G : BinaryCSP V α) (a : V → α) (h : G.Satisfies a) :
+  ∃ (a' : V → P.Sig0), (P.compose G).Satisfies a' := by
+  sorry
+
+/-- Soundness: If the composed CSP has low UNSAT, so does the original. -/
+lemma composition_soundness_contrapositive {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
+    (G : BinaryCSP V α) (a' : V → P.Sig0) :
+  -- If a' is good for the composed CSP, there exists a good assignment for G
+  ∃ (β : ℚ) (a : V → α),
+    0 < β ∧
+    G.satFrac a ≥ β * (P.compose G).satFrac a' := by
+  sorry
 
 /-- Composition preserves UNSAT up to a constant factor. -/
 theorem composition_soundness {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
