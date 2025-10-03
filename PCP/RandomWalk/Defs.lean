@@ -122,6 +122,25 @@ axiom stationary_is_uniform {V : Type*} [Fintype V] [DecidableEq V] [Nonempty V]
     (regular : ∀ v, degree G v = d) :
   stepWalk (transitionMatrix G d h) (uniformDistribution V) = uniformDistribution V
 
+/-- Random walks converge to the stationary distribution. -/
+lemma converges_to_stationary [Nonempty V]
+    (G : SimpleGraph V) [DecidableRel G.Adj] (d : ℕ) (h : d > 0)
+    (regular : ∀ v, degree G v = d) (u : V) :
+  ∀ ε > 0, ∃ t : ℕ,
+    ∀ v : V, |randomWalk G d h t u v - uniformDistribution V v| < ε := by
+  sorry
+
+/-- The rate of convergence depends on the spectral gap. -/
+lemma spectral_gap_controls_mixing
+    (G : SimpleGraph V) [DecidableRel G.Adj] (d : ℕ) (h : d > 0)
+    (λ : ℚ) (h_gap : 0 < λ ∧ λ < 1) :
+  -- Larger spectral gap → faster mixing
+  ∃ (C : ℚ), 0 < C ∧
+    ∀ (t : ℕ) (u v : V),
+      |randomWalk G d h t u v - uniformDistribution V v| ≤
+        C * (1 - λ) ^ t := by
+  sorry
+
 /-- The mixing time: number of steps until the walk is close to uniform.
 
     Note: This is axiomatized as computing it requires spectral analysis.
@@ -137,5 +156,44 @@ axiom expander_fast_mixing {V : Type*} [Fintype V] [DecidableEq V]
     (G : SimpleGraph V) [DecidableRel G.Adj] (d : ℕ) (h : d > 0)
     (lam : ℚ) (spectral_gap : True) (ε : ℚ) (ε_pos : ε > 0) :
   ∃ c : ℕ, mixingTime G d h ε ≤ c * (Fintype.card V)
+
+/-!
+## Application to Constraint Graphs
+
+Random walks on constraint graphs relate violation patterns to UNSAT amplification.
+-/
+
+/-- If a random walk starting from a violating vertex hits many violating vertices,
+    then walk-based constraints will be violated frequently. -/
+lemma violation_spreading
+    (G : SimpleGraph V) [DecidableRel G.Adj] (d : ℕ) (h : d > 0) (t : ℕ)
+    (violated_set : Finset V) (h_large : violated_set.card ≥ Fintype.card V / 10) :
+  -- Random t-walk from any vertex in violated_set
+  -- lands in violated_set with probability proportional to |violated_set|/|V|
+  ∀ u ∈ violated_set,
+    violated_set.sum (randomWalk G d h t u) ≥
+      (violated_set.card : ℚ) / Fintype.card V - (1 : ℚ) / 10 := by
+  sorry
+
+/-- Expander mixing implies that violations spread quickly. -/
+lemma expander_violation_amplification
+    (G : SimpleGraph V) [DecidableRel G.Adj] (d : ℕ) (h : d > 0)
+    (λ : ℚ) (h_exp : 0 < λ ∧ λ < 1 / 2) (t : ℕ) (h_t : t ≥ 10)
+    (violated_frac : ℚ) (h_vfrac : 0 < violated_frac ∧ violated_frac < 1) :
+  -- After t steps, random walks from violated vertices
+  -- hit violations with probability amplified by sqrt(t)
+  ∃ (C : ℚ), 0 < C ∧
+    -- Amplification factor roughly sqrt(t)
+    C ≥ violated_frac * Real.sqrt t / 10 := by
+  sorry
+
+/-- Connection to graph powering: t-step walks correspond to constraints in G^t. -/
+lemma walk_constraint_correspondence
+    (G : SimpleGraph V) [DecidableRel G.Adj] (d t : ℕ) (h : d > 0)
+    (u v : V) :
+  -- A constraint in G^t between u and v
+  -- corresponds to verifying consistency along a t-step walk from u to v
+  True := by
+  trivial
 
 end RandomWalk

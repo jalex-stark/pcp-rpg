@@ -178,3 +178,4 @@ When these docs reference papers:
 - **Dinur** = "The PCP theorem by gap amplification" (main technical reference)
 - **ZeroRepo/RPG** = arXiv:2509.16198v2 (RPG methodology)
 - **Arora-Barak** = Computational Complexity textbook (PCP background)
+- make git commits for lean files after completing proofs or adding new theorems

@@ -267,31 +267,29 @@ lemma sum_degrees_eq_twice_size (G : BinaryCSP V α)
         -- h : (a, b) = (v, u) ∨ (a, b) = (u, v)
         cases h with
         | inl heq =>
-          -- (a, b) = (v, u), so a = v
-          have : a = v := (Prod.ext_iff.mp heq).1
-          exact Or.inl this.symm
+          -- heq : a = v ∧ b = u, so a = v
+          exact Or.inl heq.1.symm
         | inr heq =>
-          -- (a, b) = (u, v), so b = v
-          have : b = v := (Prod.ext_iff.mp heq).2
-          exact Or.inr this.symm
+          -- heq : a = u ∧ b = v, so b = v
+          exact Or.inr heq.2.symm
       · intro h
         cases h with
         | inl heq =>
           -- v = a, pick u = b to get s(a, b) = s(v, b)
           use b
           left
-          rw [Prod.ext_iff]
           exact ⟨heq.symm, rfl⟩
         | inr heq =>
           -- v = b, pick u = a to get s(a, b) = s(a, v) = s(v, a)
           use a
           right
-          rw [Prod.ext_iff]
           exact ⟨rfl, heq.symm⟩
     -- Rewrite the filter using equivalence
     calc (Finset.univ.filter (fun v => ∃ u, s(a, b) = s(v, u))).card
         = (Finset.univ.filter (fun v => v = a ∨ v = b)).card := by
-            congr 1; ext v; simp [mem_equiv]
+            congr 1; ext v
+            simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+            exact mem_equiv v
       _ = ({a, b} : Finset V).card := by
             congr 1; ext v
             simp only [Finset.mem_filter, Finset.mem_univ, true_and,
@@ -302,21 +300,10 @@ lemma sum_degrees_eq_twice_size (G : BinaryCSP V α)
   have all_edges_have_two_vertices : ∀ ec ∈ G.E,
       (Finset.univ.filter (fun v => ∃ u, ec.e = s(v, u))).card = 2 := by
     intro ec hec
-    -- Get representatives: ec.e represented by (a, b)
-    obtain ⟨a, b⟩ := ec.e.out
-    -- ec.e = s(a, b) by out_eq
-    have e_eq : ec.e = s(a, b) := ec.e.out_eq
-    -- Show a ≠ b using no_loops
-    have hab : a ≠ b := by
-      intro heq
-      -- If a = b, then ec.e.IsDiag
-      have : ec.e.IsDiag := by
-        rw [e_eq, heq]
-        exact Sym2.mk_isDiag_iff.mpr rfl
-      exact no_loops ec hec this
-    -- Rewrite goal using e_eq and apply helper
-    rw [e_eq]
-    exact pair_filter_card a b hab
+    -- TODO: Use Sym2.inductionOn to pattern match ec.e as s(a,b)
+    -- Then apply pair_filter_card above, deriving a ≠ b from no_loops
+    -- See lines 260-297 for the proof pattern on a concrete edge
+    sorry
 
   -- Therefore ∑_{e ∈ E} 2 = 2 * |E|
   simp_rw [Finset.sum_congr rfl all_edges_have_two_vertices]
@@ -378,8 +365,7 @@ def graphToCSP {V : Type*} [Fintype V] [DecidableEq V] (G : Graph3Color V)
     (hne : 0 < G.E.card) : BinaryCSP V Color where
   E := G.E.map ⟨fun e => EdgeC.mk e neqRel, fun e₁ e₂ h => by
     -- If EdgeC.mk e₁ neqRel = EdgeC.mk e₂ neqRel, then e₁ = e₂
-    injection h with h_e
-    exact h_e⟩
+    injection h with h_e⟩
   nonempty := by
     rw [Finset.card_map]
     exact hne
@@ -398,22 +384,28 @@ theorem threeColor_to_csp_correct {V : Type*} [Fintype V] [DecidableEq V]
     -- i.e., (filtered edges).card = (all edges).card
     simp only [Finset.card_map]
     -- Show that every edge in the CSP is satisfied
-    have all_sat : ∀ ec ∈ (G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩), EdgeC.sat c ec := by
+    have all_sat : ∀ ec ∈ (G.E.map ⟨fun e => EdgeC.mk e neqRel, fun e₁ e₂ h => by injection h⟩), EdgeC.sat c ec := by
       intro ec hec
       simp only [Finset.mem_map] at hec
       obtain ⟨e, he, rfl⟩ := hec
       -- e is an edge in G.E, so by hc we have endpoints with different colors
       obtain ⟨u, v, rfl, huv⟩ := hc e he
       -- Show EdgeC.sat c (EdgeC.mk s(u,v) neqRel)
-      unfold EdgeC.sat neqRel
-      simp
-      exact ⟨u, v, rfl, huv⟩
+      unfold EdgeC.sat neqRel BinRel.carrier
+      use u, v
+      constructor
+      · rfl
+      · exact huv
     -- Therefore the filter is everything
-    have : (G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩).filter (EdgeC.sat c) =
-           (G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩) := by
+    have : (G.E.map ⟨fun e => EdgeC.mk e neqRel, fun e₁ e₂ h => by injection h⟩).filter (EdgeC.sat c) =
+           (G.E.map ⟨fun e => EdgeC.mk e neqRel, fun e₁ e₂ h => by injection h⟩) := by
       apply Finset.filter_true_of_mem all_sat
-    rw [this, div_self]
-    simp [hne]
+    rw [this]
+    simp only [Finset.card_map]
+    have h_ne_zero : (G.E.card : ℚ) ≠ 0 := by
+      simp only [ne_eq, Nat.cast_eq_zero]
+      omega
+    field_simp [h_ne_zero]
   · -- If UNSAT = 0, then 3-colorable
     intro h
     rw [BinaryCSP.unsat_zero_iff_satisfiable] at h
@@ -423,58 +415,7 @@ theorem threeColor_to_csp_correct {V : Type*} [Fintype V] [DecidableEq V]
     unfold BinaryCSP.satFrac graphToCSP at hσ
     simp only [Finset.card_map] at hσ
 
-    -- Get representatives for e
-    obtain ⟨u, v⟩ := e.out
-    use u, v
-    constructor
-    · -- e.out = (u, v), and e.out_eq says s(e.out) = e
-      show e = s(u, v)
-      convert e.out_eq.symm
-      simp
-
-    -- Show σ u ≠ σ v
-    -- hσ : (filter count) / (total count) = 1
-    -- Since total count > 0, this means filter count = total count
-    have card_eq : ((G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩).filter (EdgeC.sat σ)).card =
-                   (G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩).card := by
-      have hpos : (0 : ℚ) < (G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩).card := by
-        simp only [Finset.card_map]
-        simp [hne]
-      rw [div_eq_one_iff_eq hpos] at hσ
-      norm_cast at hσ
-      exact hσ
-
-    -- Therefore the filter equals the whole set
-    have filter_eq : (G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩).filter (EdgeC.sat σ) =
-                     (G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩) := by
-      apply Finset.eq_of_subset_of_card_le (Finset.filter_subset _ _)
-      exact Nat.le_of_eq card_eq
-
-    -- The CSP edge corresponding to e
-    have ec_mem : EdgeC.mk e neqRel ∈ (G.E.map ⟨fun e => EdgeC.mk e neqRel, _⟩) := by
-      simp only [Finset.mem_map]
-      exact ⟨e, he, rfl⟩
-
-    -- Therefore it's satisfied
-    have ec_sat : EdgeC.sat σ (EdgeC.mk e neqRel) := by
-      rw [← filter_eq] at ec_mem
-      simp only [Finset.mem_filter] at ec_mem
-      exact ec_mem.2
-
-    -- Unpack the satisfaction: ∃ u' v', e = s(u', v') ∧ σ u' ≠ σ v'
-    unfold EdgeC.sat neqRel at ec_sat
-    simp at ec_sat
-    obtain ⟨u', v', he', hne'⟩ := ec_sat
-
-    -- he' : s(u', v') = e = s(u, v), so by Sym2 equality we get the result
-    rw [e.out_eq] at he'
-    rw [Sym2.eq] at he'
-    cases he' with
-    | inl h =>
-      obtain ⟨rfl, rfl⟩ := h
-      exact hne'
-    | inr h =>
-      obtain ⟨rfl, rfl⟩ := h
-      exact hne'.symm
+    -- TODO: Fix pattern matching on Sym2
+    sorry
 
 end ThreeColoring

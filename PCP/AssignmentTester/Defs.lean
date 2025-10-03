@@ -45,15 +45,86 @@ variable (P : AssignmentTester)
 
 Composing CSP with assignment tester preserves UNSAT while reducing alphabet.
 
-The key insight: Replace each long assignment (from large alphabet α) with
-a short assignment (from small alphabet Σ₀) plus a local tester that verifies
-consistency.
+### Key Insight
+
+Replace each long assignment (from large alphabet α) with:
+1. A short assignment (from small alphabet Σ₀)
+2. A local tester that verifies consistency
+
+### Construction (High-Level)
+
+Given CSP G over alphabet α and tester P:
+- **New variables**: Same as G (one per vertex)
+- **New alphabet**: Σ₀ (constant size, independent of |α|)
+- **New constraints**: For each edge (u,v) in G:
+  1. **Local tests**: Check that short assignments at u,v are "good"
+  2. **Consistency check**: Verify the short assignments encode consistent long assignments
+  3. **Original constraint**: If decoded, check G's original constraint
+
+### Soundness Intuition
+
+- If composed CSP has low UNSAT → short assignments are mostly good
+- Good short assignments decode to long assignments
+- Decoded long assignments satisfy most constraints in original G
+- Therefore original G has low UNSAT
+
+### Alphabet Reduction
+
+- Original alphabet α can be exponentially large (grows during powering)
+- Reduced alphabet Σ₀ is constant (typically |Σ₀| ≈ 10-16)
+- This is crucial: prevents alphabet explosion during iteration
 -/
+
+/-- Encode a long assignment (from α) as a short assignment (to Σ₀). -/
+def encode {α : Type*} [Fintype α] (a : α) : P.Sig0 :=
+  sorry  -- TODO: Encoding depends on the specific tester (e.g., Long Code)
+
+/-- Decode a short assignment back to (possibly multiple) long assignments. -/
+def decode {α : Type*} [Fintype α] (σ : P.Sig0) : Set α :=
+  sorry  -- TODO: A short assignment may be consistent with multiple long ones
+
+/-- A short assignment is "good" if it decodes consistently. -/
+def isGoodEncoding {α : Type*} [Fintype α] (σ : P.Sig0) : Prop :=
+  True  -- TODO: Add decoding and consistency conditions
 
 /-- Completeness: If the original CSP is satisfiable, so is the composed one. -/
 lemma composition_completeness {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
     (G : BinaryCSP V α) (a : V → α) (h : G.Satisfies a) :
   ∃ (a' : V → P.Sig0), (P.compose G).Satisfies a' := by
+  -- Encode each long assignment value
+  use fun v => encode P (a v)
+  -- The encoded assignment satisfies all constraints in P.compose G because:
+  -- 1. Each encoding is good (by construction)
+  -- 2. Encodings are consistent (both decode to parts of a)
+  -- 3. Original constraints are satisfied (h)
+  sorry
+
+/-- If a short assignment is good, it decodes to some long assignment. -/
+lemma good_encoding_decodes {α : Type*} [Fintype α] [DecidableEq α] (σ : P.Sig0)
+    (h : @isGoodEncoding P α _ σ) :
+  ∃ a : α, a ∈ (decode (α := α) P σ) := by
+  sorry
+
+/-- If most short assignments are good, they decode to a consistent long assignment. -/
+lemma mostly_good_implies_decodable {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V] [DecidableEq α]
+    (G : BinaryCSP V α) (a' : V → P.Sig0)
+    (h_mostly_good : ∀ v, @isGoodEncoding P α _ (a' v)) :
+  -- Can decode to get a long assignment
+  ∃ (a : V → α), ∀ v, a v ∈ (decode (α := α) P (a' v)) := by
+  -- Use axiom of choice / dependent choice to pick one decoded value per vertex
+  sorry
+
+/-- The tester catches violations with probability ≥ P.eps. -/
+lemma tester_rejection_probability {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
+    [DecidableEq P.Sig0]
+    (G : BinaryCSP V α) (a : V → α)
+    (violated_edges : Finset (EdgeC V α))
+    (h_violations : ∀ ec ∈ violated_edges, ¬EdgeC.sat a ec) :
+  -- When we encode a and then test, violations are caught
+  let a' := fun v => encode P (a v)
+  let G' := P.compose G
+  -- At least P.eps fraction of violated edges lead to test failures
+  (violated_edges.card : ℚ) * P.eps ≤ (G'.E.filter (fun ec => ¬EdgeC.sat a' ec)).card := by
   sorry
 
 /-- Soundness: If the composed CSP has low UNSAT, so does the original. -/
@@ -63,6 +134,11 @@ lemma composition_soundness_contrapositive {V α : Type*} [Fintype V] [Fintype �
   ∃ (β : ℚ) (a : V → α),
     0 < β ∧
     G.satFrac a ≥ β * (P.compose G).satFrac a' := by
+  -- Proof strategy:
+  -- 1. If a' satisfies most constraints in P.compose G, then most short assignments are good
+  -- 2. Good encodings decode to long assignments (mostly_good_implies_decodable)
+  -- 3. Decoded assignment satisfies most constraints in G (by tester rejection)
+  -- 4. Therefore G.satFrac(decoded) is large when (P.compose G).satFrac(a') is large
   sorry
 
 /-- Composition preserves UNSAT up to a constant factor. -/

@@ -26,8 +26,35 @@ Iterate Dinur main theorem O(log n) times to boost gap to constant.
 Starting from any NP-hard problem (like SAT), we reduce to Gap-CSP,
 then iterate Dinur's amplification to reach constant gap.
 
+### Proof Structure (Top-Down)
+
+The main theorem `PCP_theorem` proves NP = PCP(log n, 1) via:
+
+**Forward direction (NP ⊆ PCP):**
+1. `NP_to_SAT`: Reduce arbitrary L ∈ NP to SAT (Cook-Levin)
+2. `SAT_to_initial_CSP`: Encode SAT as CSP with small initial gap
+3. `dinur_amplification_chain`: Apply gap amplification O(log n) times:
+   - Each iteration: `preprocess → power → compose`
+   - Gap doubles each time until reaching constant
+   - Alphabet stays bounded by composition step
+4. `gap_CSP_to_PCP_verifier`: Convert constant-gap CSP to PCP verifier
+   - Verifier samples random constraint (log n bits)
+   - Queries 2 endpoints
+   - Gap in CSP = soundness gap in PCP
+
+**Backward direction (PCP ⊆ NP):**
+- `PCP_subset_NP`: Enumerate all O(n) random strings, verify in NP
+
+### Key Lemmas
+
+- `gap_amplification_existence`: Packaging of iteration for use in reduction
+- `reduction_preserves_yes`/`reduction_preserves_no`: Correctness
+- `NP_to_PCP_reduction`: Complete reduction chain with parameter bounds
+
 References:
 - Dinur, Theorem 1.2 (pp. 11-12): From SAT to constant-gap CSP
+- Dinur, Theorem 1.5 (pp. 10-11): Single amplification step
+- Dinur, Lemma 1.3 (pp. 2-3): PCP ⇔ Gap-CSP equivalence
 -/
 
 /-- Gap-CSP with constant gap is NP-hard. -/

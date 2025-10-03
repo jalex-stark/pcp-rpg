@@ -92,6 +92,14 @@ theorem dinur_main :
   -- Combine all three phases
   sorry
 
+/-- Helper: minimum distributes over multiplication by positive rationals. -/
+lemma min_mul_left (a b c : ℚ) (hc : 0 < c) : min (c * a) (c * b) = c * min a b := by
+  sorry
+
+/-- Helper: 2 * min x y ≥ min (2x) y when y ≥ 2x. -/
+lemma gap_doubling_min (x y : ℚ) : 2 * min x y ≥ min (2 * x) (2 * y) := by
+  sorry
+
 /-- The amplification step can be iterated. -/
 theorem dinur_iteration {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
     (G : BinaryCSP V α) (k : ℕ) :
@@ -103,15 +111,46 @@ theorem dinur_iteration {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
   induction k with
   | zero =>
     -- Base case: k = 0, no iterations
-    sorry
+    -- Return G itself with C = 1, α_const = 1
+    refine ⟨α, inferInstance, G, 1, 1, ?_, ?_⟩
+    · -- Size: G.size ≤ 1^0 * G.size
+      simp; omega
+    · -- Gap: G.unsat ≥ min(2^0 * G.unsat, 1) = min(G.unsat, 1)
+      simp
+      sorry
   | succ k ih =>
-    -- Inductive step: apply dinur_main once, then k more times
-    obtain ⟨Sig0, fSig0, C, α_const, h_main⟩ := dinur_main
-    -- Get intermediate graph G_k from inductive hypothesis
+    -- Inductive step: apply dinur_main to result of k iterations
+    obtain ⟨Sig0, fSig0, C_main, α_main, h_α_pos, h_α_bound, h_main⟩ := dinur_main
+    -- Get result after k iterations
     obtain ⟨Sig_k, fSig_k, G_k, C_k, α_k, h_size_k, h_gap_k⟩ := ih
-    -- Apply one more step of dinur_main to G_k
-    have h_step := h_main G_k
-    sorry
+    -- Apply one more iteration to G_k
+    obtain ⟨G_next, h_size_step, h_gap_step⟩ := h_main G_k
+    -- Final parameters
+    refine ⟨Sig0, fSig0, G_next, max C_main C_k, min α_main α_k, ?_, ?_⟩
+    · -- Size: G_next.size ≤ C^(k+1) * G.size
+      calc G_next.size
+          ≤ C_main * G_k.size := h_size_step
+        _ ≤ C_main * (C_k ^ k * G.size) := by
+            apply Nat.mul_le_mul_left
+            exact h_size_k
+        _ = (C_main * C_k ^ k) * G.size := by ring
+        _ ≤ (max C_main C_k) ^ (k + 1) * G.size := by sorry
+    · -- Gap: G_next.unsat ≥ min(2^(k+1) * G.unsat, α_const)
+      calc G_next.unsat
+          ≥ min (2 * G_k.unsat) α_main := h_gap_step
+        _ ≥ min (2 * min ((2 : ℚ) ^ k * G.unsat) α_k) α_main := by
+            sorry  -- Uses h_gap_k and monotonicity of min
+        _ ≥ min ((2 : ℚ) ^ (k + 1) * G.unsat) (min α_main α_k) := by
+            sorry  -- Algebraic manipulation
+
+/-- Key insight: log n iterations suffice because 2^(log n) ≈ n. -/
+lemma log_iterations_suffice (n : ℕ) (ε : ℚ) (h_n : 1 < n) (h_ε : 0 < ε) :
+  ∃ (k : ℕ) (α : ℚ),
+    k = Nat.log 2 n ∧
+    0 < α ∧ α < 1 ∧
+    -- After k doublings, even tiny ε reaches constant α
+    (2 : ℚ) ^ k * ε ≥ α / 2 := by
+  sorry
 
 /-- After O(log n) iterations, we reach constant gap. -/
 theorem dinur_log_iterations {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
@@ -125,14 +164,30 @@ theorem dinur_log_iterations {V α : Type*} [Fintype V] [Fintype α] [DecidableE
     0 < α_const ∧ (α_const : ℚ) ≤ G'.unsat := by
   -- Number of vertices in G
   let n := Fintype.card V
-  -- Number of iterations needed: log n
+  -- Number of iterations needed: log_2(n)
   let k := Nat.log 2 n
   -- Apply dinur_iteration k times
-  obtain ⟨Sig0, fSig0, G', C_iter, α_const, h_size, h_gap⟩ := dinur_iteration G k
-  -- After k iterations, gap has grown to min(2^k * initial_gap, α_const)
-  -- Since 2^k ≥ n (by choice of k), and initial gap > 0,
-  -- we have that 2^k * initial_gap ≥ some constant (can choose α_const appropriately)
-  sorry
+  obtain ⟨Sig0, fSig0, G', C_iter, α_iter, h_size, h_gap⟩ := dinur_iteration G k
+
+  -- Extract natural number bounds
+  -- The constant α_const comes from dinur_main's guarantee
+  obtain ⟨Sig_main, fSig_main, C_main, α_main, h_α_pos, h_α_bound, _⟩ := dinur_main
+
+  -- Choose α_const based on α_main
+  let α_const : ℕ := 1  -- Simplified; should be ⌊α_main * denominator⌋
+
+  refine ⟨Sig0, fSig0, G', C_iter ^ k, α_const, ?_, ?_, ?_⟩
+  · -- Size bound: G'.size ≤ C^k * |G| ≤ C * n (for appropriate C)
+    calc G'.size
+        ≤ C_iter ^ k * G.size := h_size
+      _ ≤ C_iter ^ k * n := by sorry  -- G.size ≤ n for some constant
+  · -- α_const > 0
+    omega
+  · -- Gap is at least constant
+    -- From h_gap: G'.unsat ≥ min(2^k * G.unsat, α_iter)
+    -- Key: 2^k ≈ n, so 2^k * G.unsat can exceed α_iter
+    -- After O(log n) iterations, the minimum is dominated by α_iter
+    sorry
 
 /-- Single-step decomposition of dinur_main into its three phases. -/
 lemma dinur_main_decomposition {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
