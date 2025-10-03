@@ -1,8 +1,8 @@
 /-
   Constraint Graph Definitions
-  
+
   Binary CSP, assignments, satisfaction, UNSAT value
-  
+
   Difficulty: ★★☆☆☆ (2/5)
   Estimated LOC: 200
   Work Package: WP-A
@@ -15,6 +15,8 @@ import Mathlib.Data.Rat.Defs
 import Mathlib.Data.Sym.Sym2
 import Mathlib.Order.Bounds.Basic
 import Mathlib.Tactic
+import Mathlib.Combinatorics.SimpleGraph.DegreeSum
+import LeanCopilot
 
 /-!
 # Constraint Graph Definitions
@@ -235,80 +237,49 @@ def degree (G : BinaryCSP V α) (v : V) : ℕ :=
 def IsRegular (G : BinaryCSP V α) (d : ℕ) : Prop :=
   ∀ v : V, degree G v = d
 
+/-- View a BinaryCSP as a SimpleGraph by extracting the edge structure. -/
+def toSimpleGraph (G : BinaryCSP V α) : SimpleGraph V where
+  Adj u v := ∃ ec ∈ G.E, ec.e = s(u, v)
+  symm := by
+    intro u v ⟨ec, h_mem, h_eq⟩
+    exact ⟨ec, h_mem, Sym2.eq_swap.mp h_eq⟩
+  loopless := by
+    intro v ⟨ec, h_mem, h_eq⟩
+    -- If s(v,v) ∈ E, that's a diagonal/loop, contradiction
+    have : ec.e.IsDiag := Sym2.isDiag_iff_proj_eq.mpr (Sym2.eq_iff.mp h_eq)
+    -- We'll need a no_loops hypothesis to make this work
+    sorry
+
+/-- The degree in BinaryCSP matches the degree in the underlying SimpleGraph. -/
+lemma degree_eq_simpleGraph_degree (G : BinaryCSP V α)
+    (no_loops : ∀ ec ∈ G.E, ¬ec.e.IsDiag) (v : V) :
+  degree G v = (toSimpleGraph G).degree v := by
+  unfold degree toSimpleGraph SimpleGraph.degree
+  -- Both count edges incident to v
+  congr 1
+  ext u
+  simp only [Finset.mem_filter, Finset.mem_univ, true_and, SimpleGraph.mem_neighborFinset]
+  constructor
+  · intro ⟨ec, h_mem, h_eq⟩
+    exact ⟨ec, h_mem, h_eq⟩
+  · intro ⟨ec, h_mem, h_eq⟩
+    exact ⟨ec, h_mem, h_eq⟩
+
 /-- Handshaking lemma: sum of degrees equals twice the number of edges.
 
-    Requires that the graph has no self-loops (edges of the form s(v,v)). -/
+    Uses mathlib's SimpleGraph.sum_degrees_eq_twice_card_edges. -/
 lemma sum_degrees_eq_twice_size (G : BinaryCSP V α)
     (no_loops : ∀ ec ∈ G.E, ¬ec.e.IsDiag) :
   (Finset.univ.sum (degree G)) = 2 * size G := by
-  unfold size degree
-  -- Strategy: Show that ∑_v |{e ∈ E : v ∈ e}| = ∑_{e ∈ E} |{v : v ∈ e}|
-  -- For each edge e = s(a,b) with a ≠ b, there are exactly 2 distinct vertices
-
-  -- Rewrite the sum as a double count over (vertex, edge) pairs
-  have key : Finset.univ.sum (fun v => (G.E.filter (fun ec => ∃ u, ec.e = s(v, u))).card) =
-             (G.E.sum fun ec => (Finset.univ.filter (fun v => ∃ u, ec.e = s(v, u))).card) := by
-    -- This is a sum exchange: we're counting (v, ec) pairs where v is incident to ec
-    -- Both sides count the same set of pairs, just in different orders
-    -- TODO: This is a standard combinatorial identity (Fubini for finite sums)
-    -- A complete proof would use Finset.card_sigma and a bijection
-    sorry
-
-  rw [key]
-  -- Helper lemma: for any non-diagonal s(a,b), the filter has exactly 2 elements
-  have pair_filter_card : ∀ (a b : V), a ≠ b →
-      (Finset.univ.filter (fun v => ∃ u, s(a, b) = s(v, u))).card = 2 := by
-    intro a b hab
-    -- Key equivalence: ∃ u, s(a,b) = s(v,u) ↔ v = a ∨ v = b
-    have mem_equiv : ∀ v, (∃ u, s(a, b) = s(v, u)) ↔ (v = a ∨ v = b) := fun v => by
-      simp only [Sym2.eq, Sym2.rel_iff]
-      constructor
-      · intro ⟨u, h⟩
-        -- h : (a, b) = (v, u) ∨ (a, b) = (u, v)
-        cases h with
-        | inl heq =>
-          -- heq : a = v ∧ b = u, so a = v
-          exact Or.inl heq.1.symm
-        | inr heq =>
-          -- heq : a = u ∧ b = v, so b = v
-          exact Or.inr heq.2.symm
-      · intro h
-        cases h with
-        | inl heq =>
-          -- v = a, pick u = b to get s(a, b) = s(v, b)
-          use b
-          left
-          exact ⟨heq.symm, rfl⟩
-        | inr heq =>
-          -- v = b, pick u = a to get s(a, b) = s(a, v) = s(v, a)
-          use a
-          right
-          exact ⟨rfl, heq.symm⟩
-    -- Rewrite the filter using equivalence
-    calc (Finset.univ.filter (fun v => ∃ u, s(a, b) = s(v, u))).card
-        = (Finset.univ.filter (fun v => v = a ∨ v = b)).card := by
-            congr 1; ext v
-            simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-            exact mem_equiv v
-      _ = ({a, b} : Finset V).card := by
-            congr 1; ext v
-            simp only [Finset.mem_filter, Finset.mem_univ, true_and,
-                       Finset.mem_insert, Finset.mem_singleton]
-      _ = 2 := Finset.card_pair hab
-
-  -- Now show that for each non-diagonal edge ec, exactly 2 vertices are members
-  have all_edges_have_two_vertices : ∀ ec ∈ G.E,
-      (Finset.univ.filter (fun v => ∃ u, ec.e = s(v, u))).card = 2 := by
-    intro ec hec
-    -- TODO: Use Sym2.inductionOn to pattern match ec.e as s(a,b)
-    -- Then apply pair_filter_card above, deriving a ≠ b from no_loops
-    -- See lines 260-297 for the proof pattern on a concrete edge
-    sorry
-
-  -- Therefore ∑_{e ∈ E} 2 = 2 * |E|
-  simp_rw [Finset.sum_congr rfl all_edges_have_two_vertices]
-  rw [Finset.sum_const]
-  simp [mul_comm]
+  -- Convert to SimpleGraph and use mathlib's theorem
+  conv_lhs => arg 2; ext v; rw [degree_eq_simpleGraph_degree G no_loops v]
+  -- Now we need to show edgeFinset cardinality matches
+  unfold size
+  -- Use mathlib's handshaking lemma
+  rw [SimpleGraph.sum_degrees_eq_twice_card_edges]
+  congr 1
+  -- Show that #(toSimpleGraph G).edgeFinset = G.E.card
+  sorry
 
 /-- Regular graphs have bounded size (assuming no self-loops). -/
 lemma regular_size_bound (G : BinaryCSP V α) (d : ℕ)

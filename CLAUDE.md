@@ -179,3 +179,4 @@ When these docs reference papers:
 - **ZeroRepo/RPG** = arXiv:2509.16198v2 (RPG methodology)
 - **Arora-Barak** = Computational Complexity textbook (PCP background)
 - make git commits for lean files after completing proofs or adding new theorems
+- when I ask to view the website just start the server yourself and display a clickable link for me
