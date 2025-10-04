@@ -1,0 +1,407 @@
+new-instructions
+
+Skip to content
+Chat history
+
+You said:
+I need help making claude code subagents and/or other interventions. Stuff isn't working great with the leandojo/copilot integrations. One thing I do seem to have is the ability to point a specialized prover at top-level lemmas in a file. So I think (for multiple reasons) we should be having claudes write in a certain inhuman kind of style where everything is lemmas, proofs are only a few tactics long, and there may be plenty of redundancy between files. The high level orchestrators can then make sure that there are "API" files that export key results and explain something about the "AI slop" implementation. I feel like sonnet 4.5 should be capable of doing this kind of thing, but we are stretching stuff to its limits and we're going to need the scaffolding to be a bit clever. 
+Also I think we need some help with having something understand the global structure well enough to direct resources (it can be me at first but I'm gonna get tired)
+ChatGPT said:
+Request for GPT-5 Pro
+Reasoned for 7m 29s
+Awesome—this is exactly the kind of setup where a few well‑scoped subagents + strict proof style can make the whole pipeline click. Below is a concrete blueprint you can stand up today. It’s built around the constraints you listed:
+
+You can aim a specialized prover at top‑level lemmas in a file.
+
+Proofs should be short, tactic‑heavy, “inhuman” (deterministic, redundant, low‑context).
+
+You’re OK with redundancy across files, with API files that export the good stuff.
+
+You want a global director to keep the project coherent and allocate attention.
+
+I’ll give you: (1) architecture & roles, (2) repo layout, (3) prompt pack for Claude Sonnet 4.5, (4) Lean style contract (what the agents must produce), (5) orchestration skeleton (Python) you can drop in, (6) example files, (7) routing & resource allocation heuristics, and (8) an initial operating playbook.
+
+1) High‑level architecture
+Core loop (per target theorem or spec):
+
+Planner/Director builds/updates a DAG of results → decomposes into micro‑lemmas with hard constraints (≤ N tactics, explicit rewrites, no backtracking).
+
+Decomposer writes “slop” lemma files (redundant allowed) that are easy targets for your specialized prover.
+
+Prover tries to close each top‑level lemma with ≤ K tactics; if it fails, it emits localized aux lemmas (same style) and retries.
+
+Failure Analyst reads Lean/prover logs → proposes imports/hints/micro‑lemmas and minimal surgery.
+
+API Curator re‑exports the subset of lemmas that stabilized; writes a tiny human‑readable docstring per exported item.
+
+Router keeps sending only top‑level lemma names to the specialized prover (your constraint) and escalates if stuck.
+
+Everything is driven by a single source of truth: roadmap.yaml + units/*.yaml, where each “unit” is a small theory (10–50 lemmas) with tagging for routing.
+
+2) Repo layout
+repo/
+  roadmap.yaml                  # global plan (topics -> units -> targets)
+  playbooks/
+    style.md                    # "inhuman style" contract (Lean)
+    heuristics.yaml             # routing knobs (per tag)
+    prompts/                    # Claude prompt pack (see §3)
+      system/
+      decomposer/
+      prover/
+      refiner/
+      failure_analyst/
+      api_curator/
+  orchestrator/
+    router.py                   # chooses agent + prover per lemma
+    director.py                 # maintains DAG from roadmap -> units
+    agents/
+      decomposer.py
+      prover.py
+      refiner.py
+      failure_analyst.py
+      api_curator.py
+    tools/
+      lean_runner.py            # spawn Lean/Lake; parse errors
+      spec_prover.py            # “specialized prover” CLI wrapper
+      index.py                  # scan top-level lemma names from .lean files
+  theories/
+    Algebra/
+      Unit01/
+        Slop_Add.lean          # many tiny lemmas, redundant ok
+        Slop_Add_alt.lean
+        API.lean               # re-export stable lemmas + docstrings
+        unit.yaml              # declares targets, imports, tags
+    Sets/
+      Unit01/
+        ...
+  mathlib_shims/               # any compatibility glue you need
+  scripts/
+    prove_unit.py               # run: decompose -> prove -> curate -> api
+    prove_file.py               # prove top-level lemmas in a file
+    check.sh                    # CI sanity: lake build, prove %, export %
+  .github/workflows/ci.yml
+3) Prompt pack (Claude Sonnet 4.5)
+Keep prompts short, rigid, and repetitive. Claude should never improvise beyond the pattern.
+
+System (shared)
+
+You are a Lean code generator constrained to produce "AI slop" lemma files:
+- All results are stated as top-level `lemma` (no `theorem`), one lemma per block.
+- Each proof is <= {{tactic_budget}} tactic lines, deterministic, no `simp?` or `aesop?`.
+- Prefer `simp [explicit_defs]`, `rw [lemma]`, `apply`, `refine`, `constructor`, `intro`, `cases`.
+- No `by_cases` unless explicitly requested; no `simp?`, no `admit`.
+- Each lemma has a one-line docstring and explicit variable binders.
+- Redundancy is allowed across files. Do NOT try to de-duplicate.
+- End each lemma with `#print` to make names easy to index (the orchestrator strips in CI).
+Output only Lean code, nothing else.
+Decomposer (user content to Claude)
+
+Target spec (Lean 4 unless noted): {{SPEC}}
+Context imports allowed: {{IMPORTS}}
+Name prefix namespace: {{NAMESPACE}}
+Max lemma count: {{MAX_LEMMAS}}
+Constraints:
+- State micro lemmas that are "one-shot" solvable by simp/rw/apply/cases/constructor.
+- Prefer "definitional" lemmas (rfl-like), ext lemmas, `_simp` helpers, and algebraic neutral/assoc/cancel facts.
+- Keep each lemma independent (repeat hypotheses rather than referencing local context).
+- Use aggressive namespacing and deterministic names: {{PREFIX}}_{{topic}}_{{index}}
+Generate a .lean file body with only lemmas (no `section`, no comments except docstrings).
+Prover
+
+Close the lemmas in the file below. Do not change statements unless you must add harmless `[simp]` attributes.
+If a lemma is too hard, introduce at most 2 auxiliary lemmas (same file, same style) that make it trivial.
+Hard cutoff: {{tactic_budget}} tactic lines per lemma.
+Lean file:
+{{FILE_CONTENTS}}
+Failure Analyst
+
+Given Lean/prover errors:
+{{ERROR_LOG}}
+Propose the smallest set of changes to make each failing lemma trivially solvable by simp/rw/apply.
+Allowed changes: add missing imports, add minimal `[simp]` tags, insert 1–2 aux lemmas, rewrite goals to definitional lemmas.
+Output a diff-like patch against the file; do not change signatures unless obviously ill-typed.
+API Curator
+
+From the proven lemmas below, choose the externally useful ones and produce an `API.lean` that:
+- imports the slop files
+- re-exports the curated lemmas with short docstrings
+- groups exports by theme with section headers (as comments)
+- contains a brief module-level comment that “explains the slop” + provides examples.
+Input lemmas:
+{{INDEX_OF_PROVEN_LEMMAS}}
+4) “Inhuman Lean style” contract (playbooks/style.md)
+Core rules (Lean 4; include a Lean 3 variant if needed):
+
+import the minimum. Prefer Mathlib paths if you’re on Lean 4 + mathlib; declare this in unit.yaml.
+
+Every result is a lemma. Use namespace {{Unit}} and deterministic names.
+
+≤ 5 tactic lines per lemma (configurable). No simp?, no aesop?, no linarith?. If necessary, use simp, ring_nf, linarith, but only when obviously correct, and with explicit hints when possible: simp [foo, bar].
+
+Prefer by blocks with one tactic per line; avoid ; chains to keep determinism.
+
+Make aux lemmas rather than long proofs. Redundancy is fine.
+
+Use attributes sparingly: [simp] on safe normal forms, [simp, norm_cast] as needed.
+
+For algebra, include explicit typeclass binders at the lemma head. E.g.:
+
+lemma add_left_cancel' {G} [AddSemigroup G] {a b c : G} (h : a + b = a + c) : b = c := by
+  simpa using add_left_cancel h
+Write docstrings one line each; human docs live only in API.lean.
+
+5) Orchestration skeleton (Python)
+Drop‑in, you just wire your keys/CLI. The specialized prover is invoked per top‑level lemma name.
+
+# orchestrator/router.py
+import asyncio, json, pathlib, subprocess, re
+from orchestrator.tools.index import top_level_lemmas
+from orchestrator.tools.spec_prover import prove_lemmas
+from orchestrator.tools.lean_runner import lake_build
+from orchestrator.agents import decomposer, prover, failure_analyst, api_curator
+
+TACTIC_BUDGET = 5
+
+async def run_unit(unit_dir: pathlib.Path):
+    unit_cfg = json.loads((unit_dir/"unit.json").read_text()) if (unit_dir/"unit.json").exists() \
+               else yaml.safe_load((unit_dir/"unit.yaml").read_text())
+    target_spec = unit_cfg["spec"]
+    imports = unit_cfg.get("imports", [])
+    namespace = unit_cfg["namespace"]
+    max_lemmas = unit_cfg.get("max_lemmas", 30)
+
+    # 1) Decompose
+    slop_path = unit_dir/(unit_cfg.get("slop_file", "Slop_1.lean"))
+    slop_code = decomposer.run(spec=target_spec, imports=imports, namespace=namespace,
+                               max_lemmas=max_lemmas, tactic_budget=TACTIC_BUDGET)
+    slop_path.write_text(slop_code)
+
+    # 2) First attempt to prove with Claude's short tactics
+    proved_code, errs = prover.try_close(slop_path.read_text(), tactic_budget=TACTIC_BUDGET)
+    if errs:
+        patch = failure_analyst.propose_patch(file_text=proved_code, errors=errs)
+        proved_code = apply_patch( proved_code, patch )
+
+    slop_path.write_text(proved_code)
+
+    # 3) Build & index
+    build_ok, log = lake_build(unit_dir)
+    lemma_names = top_level_lemmas(proved_code)  # regex-based; robust to attrs/docs
+
+    # 4) Specialized prover on top-level lemmas only
+    results = prove_lemmas(unit_dir, lemma_names)
+
+    # 5) Curate API
+    stable = [n for (n, ok) in results.items() if ok]
+    api_code = api_curator.make_api(imports=unit_cfg.get("api_imports", imports),
+                                    reexports=stable,
+                                    module_comment=unit_cfg.get("api_comment",""))
+    (unit_dir/"API.lean").write_text(api_code)
+
+    # 6) Emit progress
+    (unit_dir/"results.json").write_text(json.dumps(results, indent=2))
+    return results
+
+def apply_patch(text, patch):
+    # trivial patcher; replace blocks delimited by markers the failure analyst prints
+    return text
+
+if __name__ == "__main__":
+    import sys, yaml
+    asyncio.run(run_unit(pathlib.Path(sys.argv[1])))
+Tool glue (stubs you’ll fill to call your env):
+
+# orchestrator/tools/spec_prover.py
+import subprocess, json
+
+def prove_lemmas(unit_dir, lemma_names):
+    out = {}
+    for name in lemma_names:
+        # Call your specialized prover CLI; must return 0/1 per lemma
+        # Example: leandojo-prove --file Slop_1.lean --lemma {name}
+        res = subprocess.run(
+            ["special-prover", "--lemma", name, "--cwd", str(unit_dir)],
+            capture_output=True, text=True
+        )
+        out[name] = (res.returncode == 0)
+    return out
+# orchestrator/tools/index.py
+import re
+LEMMA_RE = re.compile(r'^\s*lemma\s+([A-Za-z0-9_\'\.]+)\b', re.M)
+def top_level_lemmas(lean_text: str):
+    return LEMMA_RE.findall(lean_text)
+The “agents” (decomposer, prover, etc.) are thin wrappers around Claude calls using the prompt pack. Keep them stateless and idempotent.
+
+6) Example: a “slop” file (Lean 4)
+theories/Algebra/Unit01/Slop_Add.lean
+
+import Mathlib/Algebra/Group/Basic
+import Mathlib/Algebra/Group/Defs
+
+namespace Algebra.Unit01
+
+/-- Reassociate addition leftwards. -/
+lemma add_assoc_left' {G} [AddSemigroup G] (a b c : G) :
+    (a + b) + c = a + (b + c) := by
+  simpa [add_assoc]
+
+/-- Cancel the same left addend. -/
+lemma add_left_cancel' {G} [AddLeftCancelSemiring G] {a b c : G}
+    (h : a + b = a + c) : b = c := by
+  simpa using add_left_cancel h
+
+/-- Right identity for addition. -/
+@[simp] lemma add_right_id' {G} [AddMonoid G] (a : G) :
+    a + (0 : G) = a := by
+  simpa
+
+/-- Left identity for addition. -/
+@[simp] lemma add_left_id' {G} [AddMonoid G] (a : G) :
+    (0 : G) + a = a := by
+  simpa
+
+/-- Add commutativity variant. -/
+lemma add_comm' {G} [AddCommSemigroup G] (a b : G) :
+    a + b = b + a := by
+  simpa [add_comm]
+
+end Algebra.Unit01
+theories/Algebra/Unit01/API.lean (auto‑curated)
+
+import Mathlib
+import «Algebra/Unit01/Slop_Add»
+
+/-!
+# API: Algebra.Unit01
+
+This module re-exports a stable subset of the “slop” lemmas that our agents maintain.
+They are intentionally redundant variants to keep proofs trivial for automation.
+-/
+
+namespace Algebra.Unit01
+
+export Algebra.Unit01 (add_assoc_left' add_left_cancel' add_right_id' add_left_id' add_comm')
+
+end Algebra.Unit01
+7) Routing & resource allocation (so you don’t have to be the director forever)
+Put this in playbooks/heuristics.yaml and let router.py read it:
+
+routing:
+  # Tags are attached in unit.yaml per lemma cluster
+  arithmetic:
+    tactic_budget: 4
+    retries: 2
+    prover: ["arith", "general"]
+    when_fail: ["introduce_local_aux", "normalize", "add_simp_tag"]
+
+  algebra_core:
+    tactic_budget: 5
+    retries: 2
+    prover: ["simp", "ring"]
+    when_fail: ["add_definitional_lemma", "import_minimal_core"]
+
+  sets:
+    tactic_budget: 5
+    retries: 3
+    prover: ["simp", "ext"]
+    when_fail: ["insert_ext_lemma", "open_locale", "tag_simp"]
+
+escalation:
+  introduce_local_aux: {max_new_lemmas: 2}
+  add_definitional_lemma: {}
+  insert_ext_lemma: {}
+  add_simp_tag: {}
+  normalize: {tactic: "simp [*, ←?]"}
+Director scoring (inside director.py): pick next work by
+
+Impact: lemma appears on many paths in the DAG.
+
+Blockers: failing lemmas that gate many dependents.
+
+Win rate: agents+prover success history for same tag.
+
+Freshness: deprioritize lemmas churned >N times without progress.
+
+Emit a tiny progress board (results.json + a simple HTML) so you can scan: planned / skeleton / proven / failing-simp / import-missing / needs-aux.
+
+8) Minimal unit.yaml example
+namespace: Algebra.Unit01
+imports:
+  - Mathlib/Algebra/Group/Basic
+  - Mathlib/Algebra/Group/Defs
+spec: |
+  Develop redundant additive structure lemmas (assoc/comm/id/cancel) parameterized by minimal
+  typeclass assumptions so that simp/rw can close them. Prefer `simpa`-style variants.
+max_lemmas: 20
+tags: ["algebra_core"]
+api_comment: |
+  Stable additive structure helpers. Keep proofs short; redundancy is intentional.
+9) What the specialized prover needs from us
+Because you can only “point it at top-level lemmas”, the scaffolding ensures:
+
+Every lemma is top-level. No local where helpers.
+
+No dependence on local hyps across lemmas—aux lemmas repeat premises explicitly.
+
+Short, deterministic proofs so your prover doesn’t waste time exploring.
+
+Indexability: predictable names + optional #print while developing (you can strip this in CI).
+
+10) Operational playbook (day 1)
+Create a unit: add Unit01 with unit.yaml spec and imports.
+
+Run scripts/prove_unit.py theories/Algebra/Unit01.
+
+Inspect results.json and the generated API.lean.
+
+If many fails are “unknown identifier/import”, add a shim import in unit.yaml; rerun.
+
+If some proofs exceed budget, the Failure Analyst should suggest 1–2 aux lemmas or [simp] tags—accept patches that only reduce tactic length.
+
+Once stable, add the unit to roadmap.yaml dependencies for downstream units; run check.sh in CI to keep bloat under control.
+
+11) Notes & footguns
+Choose Lean version & mathlib pin, record it once in roadmap.yaml. The agents should echo that at the top of files via your imports list; avoid mixing versions.
+
+Be strict about the tactic whitelist. If you allow simp?/aesop? or long chains, determinism and specialized prover win‑rate will drop.
+
+Redundancy is a feature. Don’t dedupe within slop files; curate only in API files.
+
+Token discipline for Sonnet 4.5: keep each call scoped to a single unit/file. The planner should pass only the spec + imports, not the whole repo.
+
+12) If you want, here’s a tiny Claude wrapper (replace with your client)
+# orchestrator/agents/prover.py
+import os, anthropic
+from pathlib import Path
+
+def try_close(file_text: str, tactic_budget: int):
+    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    sys_prompt = Path("playbooks/prompts/system/prover.txt").read_text()
+    user_prompt = Path("playbooks/prompts/prover/user.txt").read_text() \
+        .replace("{{FILE_CONTENTS}}", file_text) \
+        .replace("{{tactic_budget}}", str(tactic_budget))
+    msg = client.messages.create(
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=4000,
+        system=sys_prompt,
+        messages=[{"role":"user","content":user_prompt}]
+    )
+    code = msg.content[0].text
+    # your lean_runner can try to compile and capture errors
+    errors = []  # fill with lean_runner output if any
+    return code, errors
+Where I’d start this week
+Bootstrap one unit in Algebra (like the example). Get the loop running with your specialized prover.
+
+Instrument win‑rate per tag in results.json; let router.py automatically increase aux lemma allowance on low‑win clusters.
+
+Add a tiny web dashboard or just a CSV that lists: lemma name, attempts, tactic lines, prover used, last error class (import/simp/typing).
+
+After two units are stable, add the API curator to produce doctrinal API.lean files; wire those into downstream units’ imports.
+
+If you share a little more about your specialized prover’s hook (CLI vs. API, return codes), I can tailor the spec_prover.py call contract and the Failure Analyst patches to the exact error taxonomy it emits. But you can already stand up the loop above and iterate quickly.
+
+
+
+No file chosenNo file chosen
+ChatGPT can make mistakes. Check important info.

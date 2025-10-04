@@ -1,0 +1,241 @@
+# Unit 03: Expander Graph Definitions
+#
+# RPG Graph Node: expander.defs
+# Work Package: WP-B
+# Difficulty: 4 (very hard - major missing mathlib4 dependency)
+
+# Metadata
+id: "expander.defs"
+name: "Expander Graph Definitions"
+work_package: "WP-B"
+difficulty: 4
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Expander.Unit03"
+
+# Import context
+imports:
+  - "Mathlib.Combinatorics.SimpleGraph.Basic"
+  - "Mathlib.Combinatorics.SimpleGraph.Degree"
+  - "Mathlib.LinearAlgebra.Matrix.Spectrum"
+  - "Mathlib.Data.Real.Basic"
+  - "Mathlib.Data.Rat.Defs"
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Finset.Card"
+  - "PCP.Spectral.Matrix"
+  - "PCP.Expander.Unit01.API"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Expander.Unit03.Slop_Combinatorial"
+  - "PCP.Expander.Unit03.Slop_Spectral"
+  - "PCP.Expander.Unit03.Slop_Families"
+
+# Target specification
+spec: |
+  Define and formalize the core concepts of expander graphs, including:
+
+  1. **Combinatorial Expansion**:
+     - Define (n, d, λ)-expander graphs
+     - Formalize vertex expansion property
+     - Relate edge expansion to vertex expansion
+     - Prove expanders have good connectivity properties
+
+  2. **Spectral Gap**:
+     - Define spectral gap: gap(G) = d - λ₂(G)
+     - Formalize d-regular graph properties
+     - Connect spectral gap to expansion (easy direction)
+     - Prove λ₂ bounds for regular graphs
+
+  3. **Explicit Families**:
+     - Define constructible expander families
+     - Formalize "explicit" property (poly-time construction)
+     - Specify interface for concrete expander constructions
+     - State existence theorem for constant-degree expanders
+
+  4. **Key Properties**:
+     - Expanders are highly connected
+     - Small spectral gap implies good expansion
+     - Expanders have large girth (no short cycles for good expanders)
+     - Random walks mix quickly on expanders
+
+  Reference: Dinur §2 (pp. 7-9), focuses on spectral characterization
+
+  Note: This is a major missing dependency in mathlib4. May need to:
+  - Port definitions from Isabelle AFP (Expander_Graphs theory)
+  - Formalize basic spectral lemmas from scratch
+  - Possibly axiomatize existence initially and prove later
+
+# Constraints
+max_lemmas: 40
+tactic_budget: 7.5  # difficulty 4 * 1.5 multiplier + base 5 from WP-B
+
+# Tags for routing
+tags:
+  - "graph_theory"
+  - "expanders"
+  - "spectral"
+  - "linear_algebra"
+  - "definitional"
+
+# Expected outputs
+slop_files:
+  - "Slop_Combinatorial.lean"
+  - "Slop_Spectral.lean"
+  - "Slop_Families.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Core definitions for expander graphs.
+
+  Expander graphs are sparse yet highly connected graphs with strong
+  expansion properties. They are fundamental to Dinur's PCP proof.
+
+  This module provides:
+  - Combinatorial expansion definitions (vertex and edge expansion)
+  - Spectral characterization (λ₂ bounds)
+  - Explicit family interface
+
+  Usage:
+  ```lean
+  import PCP.Expander.Unit03
+
+  variable {V : Type*} [Fintype V] (G : SimpleGraph V)
+
+  -- Check if a graph is a (d, λ)-expander
+  example (d : ℕ) (λ : ℝ) (h_reg : G.IsRegular d) (h_gap : spectralGap G ≥ d - λ) :
+      IsExpander G d λ := by
+    apply isExpander_of_spectralGap h_reg h_gap
+
+  -- Explicit family example
+  example : ∃ (family : ℕ → SimpleGraph (Fin ?_)),
+      ∀ n, IsExplicitFamily family ∧ IsExpander (family n) 3 0.5 :=
+    explicit_expander_family_exists
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "expander.edge_expansion_def"
+  - "spectral.eigenvalues"
+  - "spectral.adjacency_matrix"
+
+rpg_dependents:
+  - "expander.cheeger"
+  - "constraint_graph.preprocess"
+  - "expander.explicit_family"
+  - "random_walk.mixing"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on three main components:
+
+    **Part 1: Combinatorial Expansion (Slop_Combinatorial.lean)**
+    - Define IsExpander predicate with combinatorial characterization
+    - Define vertex expansion (similar to edge expansion)
+    - Prove basic monotonicity: stronger expansion → stronger properties
+    - Lemmas relating vertex and edge expansion
+
+    **Part 2: Spectral Characterization (Slop_Spectral.lean)**
+    - Define spectralGap: gap(G) = d - λ₂(G) for d-regular graphs
+    - Formalize regular graph properties (all degrees equal d)
+    - State spectral expansion theorem: λ₂ ≤ d - h²/(2d)
+    - Lemmas for computing λ₂ in simple cases
+
+    **Part 3: Explicit Families (Slop_Families.lean)**
+    - Define IsExplicitFamily: poly-time constructible sequence
+    - Define ExpanderFamily: family with uniform expansion bounds
+    - Axiomatize or state existence: constant-degree expanders exist
+    - Interface for concrete constructions (Ramanujan, zig-zag, etc.)
+
+    Break down large definitions:
+    - Separate d-regularity from spectral bounds
+    - Factor out connectivity lemmas
+    - Create intermediate lemmas for each property
+
+  prover: |
+    Expected tactics by section:
+
+    **Combinatorial:**
+    - unfold IsExpander, vertexExpansion, edgeExpansion
+    - simp [Finset.card_le_card]
+    - apply div_le_div
+    - cases (for set operations)
+
+    **Spectral:**
+    - unfold spectralGap, IsRegular
+    - apply eigenvalue_bound
+    - rw [rayleighQuotient]
+    - linarith (for gap bounds)
+    - norm_cast (for ℕ → ℝ conversions)
+
+    **Families:**
+    - unfold IsExplicitFamily, ExpanderFamily
+    - constructor (for existential proofs)
+    - apply poly_time_construction
+    - intro n; specialize h n
+
+    If stuck:
+    - Add auxiliary lemmas for regularity checks
+    - Factor out eigenvalue computations
+    - Create helper lemmas for expansion bounds
+    - Consider axiomatizing existence initially
+
+  failure_analyst: |
+    Common issues:
+
+    **Missing mathlib lemmas:**
+    - Spectral theorem for symmetric matrices (may need to state)
+    - Eigenvalue ordering properties
+    - Rayleigh quotient characterization
+
+    **Type issues:**
+    - SimpleGraph vs. Matrix representation mismatch
+    - ℕ vs. ℝ for eigenvalues (use norm_cast)
+    - Fintype assumptions for cardinality
+
+    **Definitional challenges:**
+    - Handling non-regular graphs gracefully
+    - Division by zero when degree = 0
+    - Empty graph edge cases
+
+    **Escalation strategies:**
+    - If spectral lemmas fail: axiomatize key spectral results
+    - If construction is hard: state existence without proof
+    - If types don't align: add conversion lemmas
+    - If too complex: break into smaller units
+
+    **Recommended imports if failures:**
+    - Mathlib.LinearAlgebra.Matrix.Hermitian (for spectral theorem)
+    - Mathlib.Combinatorics.SimpleGraph.Connectivity
+    - Mathlib.Data.Complex.Basic (if eigenvalues need ℂ)
+
+# Estimated LOC from RPG
+estimatedLOC: 300
+
+# Notes
+notes: |
+  Major missing mathlib4 dependency - may need to port from Isabelle AFP.
+
+  This unit is foundational for the entire PCP proof. The expander preprocessing
+  step (WP-B) depends critically on explicit expander families.
+
+  **Possible approaches:**
+  1. Full formalization: Port spectral graph theory from Isabelle/HOL
+  2. Partial formalization: State key theorems as axioms, prove later
+  3. Incremental: Focus on combinatorial defs first, add spectral later
+
+  **Known challenges:**
+  - Spectral theorem might not be fully available in mathlib4
+  - Eigenvalue computations are complex
+  - Explicit constructions (Ramanujan, zig-zag) are very involved
+
+  **Recommended strategy:**
+  - Start with combinatorial definitions (easier)
+  - State spectral gap theorem without proof initially
+  - Axiomatize explicit family existence
+  - Return to proofs in later iteration when foundations are stronger

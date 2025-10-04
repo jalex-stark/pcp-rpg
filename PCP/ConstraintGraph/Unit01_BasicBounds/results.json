@@ -1,0 +1,34 @@
+{
+  "unit_id": "csp.basic_bounds",
+  "status": "completed",
+  "work_package": "WP-A",
+  "difficulty": 1,
+  "timestamp": "2025-10-03T20:10:00Z",
+  "lemmas_attempted": 13,
+  "lemmas_proven": 13,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "unfold": 4,
+    "div_nonneg": 1,
+    "simp": 2,
+    "rw": 1,
+    "div_le_iff₀": 1,
+    "exact": 1,
+    "obtain": 2,
+    "linarith": 6,
+    "constructor": 2,
+    "intro": 2
+  },
+  "avg_tactics_per_lemma": 1.8,
+  "slop_files": [
+    "Slop_Bounds.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully proven all basic bounds on satisfaction fractions and UNSAT values. All 13 lemmas complete with clean rational arithmetic proofs. Key results: satFrac/maxSat/unsat all in [0,1], complementarity relations, and zero/one characterizations. Foundation for constraint graph reasoning.",
+  "next_steps": [
+    "Unblocks: constraint_graph.degree, constraint_graph.regularity",
+    "Unblocks: gap_amplification.main",
+    "Foundation for all constraint graph analysis"
+  ]
+}

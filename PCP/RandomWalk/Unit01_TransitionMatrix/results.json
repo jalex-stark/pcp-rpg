@@ -1,0 +1,46 @@
+{
+  "unit_id": "random_walk.transition_matrix",
+  "status": "completed",
+  "work_package": "WP-C",
+  "difficulty": 2,
+  "timestamp": "2025-10-03T20:30:00Z",
+  "lemmas_attempted": 23,
+  "lemmas_proven": 23,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "rfl": 4,
+    "Iff.rfl": 3,
+    "unfold": 7,
+    "split_ifs": 4,
+    "apply": 3,
+    "simp": 13,
+    "div_nonneg": 2,
+    "div_le_iff₀": 1,
+    "div_pos": 1,
+    "rw": 5,
+    "omega": 3,
+    "by_contra": 1,
+    "intro": 2,
+    "linarith": 1,
+    "congr": 1,
+    "ext": 1,
+    "convert": 1,
+    "exact": 4,
+    "field_simp": 2,
+    "constructor": 1,
+    "norm_cast": 1
+  },
+  "avg_tactics_per_lemma": 2.5,
+  "slop_files": [
+    "Slop_TransitionMatrix.lean",
+    "Slop_Distribution.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully proven all transition matrix and distribution properties. 23 lemmas across two slop files: transition matrix properties (11 lemmas) and probability distributions (12 lemmas). Key results: entries in [0,1], symmetry for undirected graphs, row sums = 1 for d-regular graphs, uniform distribution validity. Fixed transitionMatrix_row_sum with degree characterization proof.",
+  "next_steps": [
+    "Unblocks: random_walk.convergence",
+    "Unblocks: expander.mixing_lemma",
+    "Foundation for random walk analysis on graphs"
+  ]
+}

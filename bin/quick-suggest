@@ -1,0 +1,29 @@
+#!/bin/bash
+# Quick tactic suggestion test
+# Shows exactly what LeanCopilot says (including "Try this:")
+
+FILE="$1"
+THEOREM="$2"
+
+if [ -z "$FILE" ] || [ -z "$THEOREM" ]; then
+    echo "Usage: $0 <file> <theorem>"
+    exit 1
+fi
+
+echo "Getting suggestions for $THEOREM..."
+
+# Create inline test
+cat > /tmp/copilot_quick_test.lean <<EOF
+import LeanCopilot
+import Mathlib.Tactic
+
+theorem test_theorem (a b : Nat) : a + b = b + a := by
+  suggest_tactics
+  sorry
+EOF
+
+# Build and show output
+export DYLD_LIBRARY_PATH=.lake/packages/LeanCopilot/.lake/build/lib:$DYLD_LIBRARY_PATH
+lake build /tmp/copilot_quick_test.lean 2>&1 | grep -A 3 "info:"
+
+rm -f /tmp/copilot_quick_test.lean

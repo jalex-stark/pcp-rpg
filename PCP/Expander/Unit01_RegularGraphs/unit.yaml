@@ -1,0 +1,152 @@
+# Unit 01: Regular Graph Properties
+#
+# RPG Graph Node: expander.regular_graphs
+# Work Package: WP-B
+# Difficulty: 2 (graph degree properties)
+
+# Metadata
+id: "expander.regular_graphs"
+name: "Regular Graph Properties"
+work_package: "WP-B"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Expander.Unit01"
+
+# Import context
+imports:
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Finset.Basic"
+  - "Mathlib.Combinatorics.SimpleGraph.Basic"
+  - "Mathlib.Combinatorics.SimpleGraph.Degree"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Expander.Unit01.Slop_Regular"
+
+# Target specification
+spec: |
+  Prove basic properties of regular graphs and vertex boundaries:
+
+  **Regularity:**
+  1. IsRegular_def: Definitional unfolding
+  2. IsRegular_degree: v-regular graph has all degrees equal to v
+  3. IsRegular_nonneg: Regular graphs have non-negative degree
+  4. IsRegular_pos_of_nonempty: Non-empty regular graphs with edges have positive degree
+  5. IsRegular_iff: Alternative characterization
+
+  **Vertex Boundary:**
+  6. vertexBoundary_def: Definitional unfolding
+  7. vertexBoundary_subset: Boundary is a subset of vertices outside S
+  8. vertexBoundary_empty: Boundary of empty set is empty
+  9. vertexBoundary_monotone: Larger sets have (potentially) larger boundaries
+  10. mem_vertexBoundary_iff: Characterize membership in boundary
+
+  **Expansion Ratios:**
+  11. vertexExpansionRatio_def: Definitional unfolding
+  12. vertexExpansionRatio_nonneg: Expansion ratio is non-negative
+  13. vertexExpansionRatio_empty: Empty set has zero expansion ratio
+  14. edgeBoundary_def: Definitional unfolding
+  15. edgeBoundary_symm: Edge boundary is symmetric in edges
+  16. edgeExpansionRatio_def: Definitional unfolding
+  17. edgeExpansionRatio_nonneg: Edge expansion ratio is non-negative
+
+  Key definitions:
+  - IsRegular G d ↔ ∀ v : V, G.degree v = d
+  - vertexBoundary G S = {v | v ∉ S ∧ ∃ u ∈ S, G.Adj u v}
+  - vertexExpansionRatio G S = |∂S| / |S| (when |S| > 0)
+
+  Expected tactics:
+  - unfold IsRegular, unfold vertexBoundary
+  - ext (for set/function extensionality)
+  - simp (for set membership)
+  - split_ifs (for case analysis on S.card = 0)
+  - apply Set.subset_def
+  - exists (for existential goals)
+
+# Constraints
+max_lemmas: 25
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "expander_graphs"
+  - "graph_theory"
+  - "combinatorics"
+
+# Expected outputs
+slop_files:
+  - "Slop_Regular.lean"
+  - "Slop_Boundary.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Regular graph and expansion properties for expander graph theory.
+
+  A d-regular graph has all vertices with degree exactly d. The vertex boundary
+  measures connectivity between sets.
+
+  Usage:
+  ```lean
+  import PCP.Expander.Unit01
+
+  variable {V : Type*} [Fintype V] [DecidableEq V]
+  variable (G : SimpleGraph V) [∀ v, Fintype (G.neighborSet v)]
+
+  example (d : ℕ) (h : IsRegular G d) (v : V) :
+      G.degree v = d :=
+    h v
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "spectral.adjacency_matrix"
+
+rpg_dependents:
+  - "expander.spectral_gap"
+  - "preprocessing.expanderize"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    1. Definitional lemmas for IsRegular and boundaries
+    2. Basic properties (non-negativity, empty set cases)
+    3. Set membership characterizations
+    4. Monotonicity and subset properties
+    5. Symmetry properties
+
+    Create redundant variants:
+    - Both directions of iff statements
+    - Pointwise and set-level properties
+    - Different forms of membership characterization
+
+  prover: |
+    Expected tactics:
+    - unfold IsRegular, vertexBoundary, edgeBoundary
+    - ext v (for set extensionality)
+    - simp [Set.mem_def] for set membership
+    - split_ifs for case analysis
+    - exists u (to provide witnesses)
+    - apply G.adj_comm for graph symmetry
+    - intro, constructor for structural proofs
+
+    If stuck, add aux lemmas for:
+    - Degree properties from SimpleGraph
+    - Fintype instance for neighbor sets
+    - Set operations (subset, empty, membership)
+
+  failure_analyst: |
+    Common failures:
+    - Missing: [∀ v, Fintype (G.neighborSet v)] for degree computation
+    - Missing: Set.toFinset requires decidability
+    - Type mismatch: Set vs Finset operations
+
+    Fixes:
+    - Add [∀ v, Fintype (G.neighborSet v)] to signatures
+    - Use Set.toFinset only with appropriate decidability instances
+    - Import Combinatorics.SimpleGraph.Degree for degree lemmas

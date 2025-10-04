@@ -1,0 +1,113 @@
+# Unit 02: Cheeger Inequality (Easy Direction)
+#
+# RPG Graph Node: expander.cheeger_easy
+# Work Package: WP-B
+# Difficulty: 2
+
+# Metadata
+id: "expander.cheeger_easy"
+name: "Cheeger Inequality (Easy Direction)"
+work_package: "WP-B"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Expander.Unit02"
+
+# Import context
+imports:
+  - "Mathlib.Combinatorics.SimpleGraph.Basic"
+  - "Mathlib.Data.Rat.Defs"
+  - "PCP.Expander.Unit01_EdgeExpansion.API"
+  - "PCP.Spectral.Unit02_RayleighQuotient.API"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Expander.Unit02.Slop_CheegerEasy"
+
+# Target specification
+spec: |
+  Prove the easy direction of Cheeger's inequality.
+
+  Statement: h(G) ≥ (d - λ₂) / 2
+
+  For a d-regular graph, the edge expansion h(G) is lower bounded by
+  the spectral gap (d - λ₂) / 2.
+
+  Goals:
+  1. State the inequality for d-regular graphs
+  2. Prove using Rayleigh quotient and expansion
+  3. Helper lemmas:
+     - Relationship between cuts and eigenvectors
+     - Spectral gap to expansion conversion
+  4. Show this is the "easy" direction (expansion → spectral gap)
+
+  Reference: Dinur Theorem 2.3 (direction 1), p. 8
+
+# Constraints
+max_lemmas: 10
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "graph_theory"
+  - "spectral"
+  - "expanders"
+
+# Expected outputs
+slop_files:
+  - "Slop_CheegerEasy.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Easy direction of Cheeger's inequality.
+
+  Relates edge expansion to spectral gap: h(G) ≥ (d - λ₂)/2.
+
+  Usage:
+  ```lean
+  import PCP.Expander.Unit02
+
+  variable {V : Type*} [Fintype V] [DecidableEq V]
+  variable (G : SimpleGraph V) (d : ℕ)
+
+  -- Easy direction
+  example (hreg : IsRegular G d) (h : edgeExpansion G) (λ₂ : ℝ) :
+      h ≥ (d - λ₂) / 2 :=
+    cheeger_easy G d hreg h λ₂
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "expander.edge_expansion_def"
+  - "spectral.rayleigh_quotient"
+
+rpg_dependents:
+  - "expander.cheeger"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Use Rayleigh quotient characterization
+    - Relate sweep cuts to eigenvectors
+    - Show expansion bounds spectral gap
+    - This direction is "easier" than the reverse
+
+  prover: |
+    Expected tactics:
+    - unfold edgeExpansion, rayleighQuotient
+    - apply (inequalities)
+    - field_simp (for division)
+    - linarith (for real arithmetic)
+    - cases (on set membership)
+
+  failure_analyst: |
+    Common issues:
+    - Need d-regular assumption
+    - Need non-trivial graph (connected)
+    - Spectral gap definition varies
+    - May need normalized Laplacian

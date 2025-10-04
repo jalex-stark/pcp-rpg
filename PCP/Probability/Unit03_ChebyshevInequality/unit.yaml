@@ -1,0 +1,111 @@
+# Unit 03: Chebyshev Inequality
+#
+# RPG Graph Node: prob.chebyshev_inequality
+# Work Package: WP-A
+# Difficulty: 1
+
+# Metadata
+id: "prob.chebyshev_inequality"
+name: "Chebyshev Inequality"
+work_package: "WP-A"
+difficulty: 1
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Probability.Unit03"
+
+# Import context
+imports:
+  - "Mathlib.Probability.ProbabilityMassFunction.Basic"
+  - "Mathlib.MeasureTheory.Measure.MeasureSpace"
+  - "Mathlib.Probability.Variance"
+  - "PCP.Probability.Unit02_MarkovInequality.API"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Probability.Unit03.Slop_ChebyshevInequality"
+
+# Target specification
+spec: |
+  Prove Chebyshev's inequality for random variables.
+
+  Statement: Pr[|X - 𝔼[X]| ≥ t] ≤ Var[X] / t²
+
+  Chebyshev's inequality gives concentration bounds using variance.
+  It's a direct consequence of Markov's inequality applied to (X - 𝔼[X])².
+
+  Goals:
+  1. State for measure spaces: μ{|X - 𝔼[X]| ≥ t} ≤ Var[X] / t²
+  2. Prove from Markov's inequality
+  3. Variants:
+     - Standardized form: Pr[|X - 𝔼[X]| ≥ k·σ] ≤ 1/k²
+     - One-sided bounds
+  4. Corollaries and applications
+
+  Note: Should be in mathlib - verify and re-export if so.
+
+# Constraints
+max_lemmas: 8
+tactic_budget: 4
+
+# Tags for routing
+tags:
+  - "probability"
+  - "arithmetic"
+  - "concentration"
+
+# Expected outputs
+slop_files:
+  - "Slop_ChebyshevInequality.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Chebyshev's inequality for concentration bounds.
+
+  Uses variance to bound tail probabilities: Pr[|X - 𝔼[X]| ≥ t] ≤ Var[X]/t².
+
+  Usage:
+  ```lean
+  import PCP.Probability.Unit03
+
+  variable {α : Type*} [MeasurableSpace α] (μ : Measure α)
+  variable [IsProbabilityMeasure μ] (X : α → ℝ)
+
+  -- Chebyshev's inequality
+  example (t : ℝ) (ht : 0 < t) :
+      μ {ω | t ≤ |X ω - ∫ x, X x ∂μ|} ≤ Var[X] / t^2 :=
+    chebyshev_inequality μ X t ht
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "prob.markov_inequality"
+
+rpg_dependents: []
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Check if in mathlib (MeasureTheory.Probability.*)
+    - Prove from Markov applied to (X - E[X])²
+    - Need variance definition
+    - Standardized versions useful
+
+  prover: |
+    Expected tactics:
+    - apply markov_inequality (on squared deviation)
+    - unfold variance
+    - simp (for measure theory)
+    - ring_nf (for algebraic manipulation)
+    - apply sq_nonneg
+
+  failure_analyst: |
+    Common issues:
+    - Check Mathlib.Probability.Variance
+    - May be called "meas_ge_le_variance_div" or similar
+    - Need integrability conditions
+    - t > 0 required for division

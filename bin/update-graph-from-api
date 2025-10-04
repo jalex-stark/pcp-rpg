@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+"""
+Update RPG graph status based on existence of API.lean files.
+
+Scans all unit directories for API.lean files and marks corresponding
+RPG nodes as "completed" in the graph JSON.
+"""
+
+import json
+import os
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).parent.parent
+GRAPH_PATH = REPO_ROOT / "website" / "data" / "pcp-graph.json"
+PCP_DIR = REPO_ROOT / "PCP"
+
+def find_api_files():
+    """Find all API.lean files in PCP/ directory."""
+    api_files = []
+    for root, dirs, files in os.walk(PCP_DIR):
+        if "API.lean" in files:
+            rel_path = Path(root).relative_to(REPO_ROOT)
+            api_files.append(rel_path / "API.lean")
+    return api_files
+
+def path_to_node_id(api_path):
+    """
+    Convert API.lean path to likely RPG node ID.
+
+    Examples:
+    - PCP/ConstraintGraph/Unit01_BasicBounds/API.lean -> constraint_graph.basic_bounds
+    - PCP/Expander/Unit02_CheegerEasy/API.lean -> expander.cheeger_easy
+    """
+    parts = api_path.parts
+
+    # Skip 'PCP' and get module name
+    if len(parts) < 3:
+        return None
+
+    module = parts[1].lower()  # ConstraintGraph -> constraintgraph
+    unit_name = parts[2]  # Unit01_BasicBounds
+
+    # Extract unit suffix (after UnitXX_)
+    if "_" in unit_name:
+        suffix = unit_name.split("_", 1)[1]  # BasicBounds
+        # Convert CamelCase to snake_case
+        import re
+        suffix_snake = re.sub(r'(?<!^)(?=[A-Z])', '_', suffix).lower()
+        node_id = f"{module}.{suffix_snake}"
+        return node_id
+
+    return None
+
+def update_graph_status(api_files):
+    """Update graph JSON to mark nodes with API files as completed."""
+
+    # Load existing graph
+    with open(GRAPH_PATH, 'r') as f:
+        graph = json.load(f)
+
+    # Build set of node IDs from API files
+    api_node_ids = set()
+    for api_path in api_files:
+        node_id = path_to_node_id(api_path)
+        if node_id:
+            api_node_ids.add(node_id)
+
+    # Update node statuses
+    updated_count = 0
+    for node in graph.get("nodes", []):
+        node_id = node.get("id")
+
+        # Check if this node has a corresponding API file
+        if node_id in api_node_ids:
+            old_status = node.get("status")
+            if old_status != "completed":
+                node["status"] = "completed"
+                updated_count += 1
+                print(f"✓ Marked {node_id} as completed (was: {old_status})")
+
+        # Also check if the node's path matches an API directory
+        node_path = node.get("path", "")
+        if node_path:
+            node_dir = str(Path(node_path).parent)
+            for api_path in api_files:
+                if str(api_path.parent) == node_dir:
+                    old_status = node.get("status")
+                    if old_status != "completed":
+                        node["status"] = "completed"
+                        updated_count += 1
+                        print(f"✓ Marked {node_id} as completed (was: {old_status})")
+                    break
+
+    # Update metadata timestamp
+    from datetime import datetime, timezone
+    graph["metadata"]["updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Write updated graph
+    with open(GRAPH_PATH, 'w') as f:
+        json.dump(graph, f, indent=2)
+
+    print(f"\n✅ Updated {updated_count} nodes in {GRAPH_PATH}")
+    return updated_count
+
+def main():
+    print("🔍 Scanning for API.lean files...")
+    api_files = find_api_files()
+
+    if not api_files:
+        print("No API.lean files found.")
+        return 0
+
+    print(f"\nFound {len(api_files)} API.lean files:")
+    for api_path in api_files:
+        print(f"  - {api_path}")
+
+    print()
+    updated = update_graph_status(api_files)
+
+    return 0 if updated >= 0 else 1
+
+if __name__ == "__main__":
+    sys.exit(main())

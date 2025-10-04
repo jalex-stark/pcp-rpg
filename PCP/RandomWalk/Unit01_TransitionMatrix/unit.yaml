@@ -1,0 +1,154 @@
+# Unit 01: Transition Matrix Properties
+#
+# RPG Graph Node: random_walk.transition_matrix
+# Work Package: WP-C
+# Difficulty: 2 (matrix arithmetic + graph properties)
+
+# Metadata
+id: "random_walk.transition_matrix"
+name: "Transition Matrix Properties"
+work_package: "WP-C"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "RandomWalk.Unit01"
+
+# Import context
+imports:
+  - "Mathlib.Data.Matrix.Basic"
+  - "Mathlib.Combinatorics.SimpleGraph.Basic"
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Rat.Defs"
+  - "Mathlib.Algebra.Order.Field.Defs"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Spectral.Matrix"
+  - "PCP.RandomWalk.Unit01.Slop_TransitionMatrix"
+  - "PCP.RandomWalk.Unit01.Slop_Distribution"
+
+# Target specification
+spec: |
+  Prove basic properties of transition matrices and distributions for random walks:
+
+  **Transition Matrix:**
+  1. transitionMatrix_def: Definitional unfolding
+  2. transitionMatrix_entry_nonneg: Entries are non-negative
+  3. transitionMatrix_entry_le_one: Entries are at most 1 (when d ≥ 1)
+  4. transitionMatrix_of_adj: Entry is 1/d when vertices are adjacent
+  5. transitionMatrix_of_not_adj: Entry is 0 when vertices are not adjacent
+  6. transitionMatrix_diag: Diagonal entries (depends on whether self-loops exist)
+  7. transitionMatrix_symm: Symmetric for undirected graphs (T_uv = T_vu)
+  8. transitionMatrix_row_sum: Each row sums to 1 for d-regular graphs
+
+  **Distributions:**
+  9. Distribution_isValid_def: Definitional unfolding
+  10. uniformDistribution_def: Definitional unfolding
+  11. uniformDistribution_nonneg: Uniform distribution has non-negative entries
+  12. uniformDistribution_entry: Each entry equals 1/|V|
+  13. uniformDistribution_sum: Entries sum to 1
+  14. uniformDistribution_valid: Uniform distribution is valid
+
+  Key definitions:
+  - transitionMatrix G d h u v = if G.Adj u v then 1/d else 0
+  - Distribution.isValid p ↔ (∀ v, 0 ≤ p v) ∧ Finset.univ.sum p = 1
+  - uniformDistribution V v = 1 / Fintype.card V
+
+  Expected tactics:
+  - unfold transitionMatrix, unfold Distribution.isValid
+  - split_ifs for case analysis on adjacency
+  - div_nonneg, div_le_iff₀ for rational division
+  - Finset.sum_const for constant sums
+  - nsmul_eq_mul for scalar multiplication
+  - G.adj_comm for graph symmetry
+
+# Constraints
+max_lemmas: 25
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "random_walks"
+  - "graph_theory"
+  - "probability"
+  - "matrix_theory"
+
+# Expected outputs
+slop_files:
+  - "Slop_TransitionMatrix.lean"
+  - "Slop_Distribution.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Transition matrix and distribution properties for random walks on graphs.
+
+  The transition matrix of a d-regular graph has entry 1/d for adjacent vertices,
+  0 otherwise. This gives a stochastic matrix (rows sum to 1).
+
+  Usage:
+  ```lean
+  import PCP.RandomWalk.Unit01
+
+  variable {V : Type*} [Fintype V] [DecidableEq V] [Nonempty V]
+  variable (G : SimpleGraph V) [DecidableRel G.Adj] (d : ℕ) (h : d > 0)
+
+  example (regular : ∀ v, G.degree v = d) (u : V) :
+      Finset.univ.sum (transitionMatrix G d h u) = 1 :=
+    transitionMatrix_row_sum G d h regular u
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "spectral.adjacency_matrix"
+
+rpg_dependents:
+  - "random_walk.convergence"
+  - "expander.mixing_lemma"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    1. Definitional lemmas for transitionMatrix and distributions
+    2. Entry-wise properties (non-negativity, upper bounds, specific values)
+    3. Symmetry properties (from undirected graphs)
+    4. Row sum properties (stochasticity)
+    5. Validity properties for distributions
+
+    Create redundant variants:
+    - Separate lemmas for adjacency cases (if adj vs if not adj)
+    - Pointwise and matrix-level properties
+    - Different forms of the same property
+
+  prover: |
+    Expected tactics:
+    - unfold transitionMatrix, unfold Distribution.isValid
+    - split_ifs (for G.Adj u v case analysis)
+    - simp [G.adj_comm] for symmetry
+    - div_nonneg, div_le_iff₀ for division properties
+    - Finset.sum_const for summing constants
+    - nsmul_eq_mul to convert scalar multiplication to multiplication
+    - omega for natural number arithmetic
+    - norm_cast for ℕ → ℚ coercions
+
+    If stuck, add aux lemmas for:
+    - Fintype.card_pos (cardinality is positive)
+    - Neighbor set cardinality for regular graphs
+    - Rational division by positive denominators
+
+  failure_analyst: |
+    Common failures:
+    - Missing: DecidableRel G.Adj for transition matrix definition
+    - Missing: Nonempty V for uniform distribution
+    - Type mismatch: Need norm_cast for ℕ → ℚ
+    - Division by zero: Need h : d > 0 hypothesis
+
+    Fixes:
+    - Add [DecidableRel G.Adj] to lemma signatures
+    - Add [Nonempty V] for uniform distribution lemmas
+    - Use div_nonneg with explicit proofs of positivity
+    - Use G.adj_comm for undirected graph symmetry

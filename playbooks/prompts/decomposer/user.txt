@@ -1,0 +1,24 @@
+Target specification (Lean 4):
+{{SPEC}}
+
+Context imports allowed:
+{{IMPORTS}}
+
+Namespace: {{NAMESPACE}}
+
+Max lemma count: {{MAX_LEMMAS}}
+
+Tactic budget per lemma: {{tactic_budget}}
+
+TASK:
+Generate a .lean file body containing micro-lemmas that collectively capture the specification.
+
+Requirements:
+- State lemmas that are "one-shot" solvable by simp/rw/apply/cases/constructor
+- Keep each lemma independent (repeat type class binders explicitly)
+- Use aggressive namespacing and deterministic names: {{PREFIX}}_{{topic}}_{{index}}
+- Add one-line docstring per lemma
+- No `section`, no comments except docstrings
+- Redundancy is OK - if multiple formulations help, write them all
+
+Generate the Lean 4 code now:

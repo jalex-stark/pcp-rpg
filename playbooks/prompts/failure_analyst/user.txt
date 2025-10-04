@@ -1,0 +1,18 @@
+Given the Lean errors below, propose the smallest set of changes to make each failing lemma trivially solvable by simp/rw/apply.
+
+Error log:
+```
+{{ERROR_LOG}}
+```
+
+Current file:
+```lean
+{{FILE_CONTENTS}}
+```
+
+For each error, provide:
+1. Error diagnosis
+2. Specific fix (import/attribute/aux lemma/rewrite)
+3. Justification
+
+Output structured patches:

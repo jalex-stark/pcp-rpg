@@ -1,0 +1,10 @@
+Close the lemmas in the file below. Follow the tactic budget: ≤ {{tactic_budget}} lines per proof.
+
+If a lemma is too hard, introduce at most 2 auxiliary lemmas (same file, same style) that make it trivial.
+
+Lean file to complete:
+```lean
+{{FILE_CONTENTS}}
+```
+
+Return the complete Lean 4 file with all proofs filled in:

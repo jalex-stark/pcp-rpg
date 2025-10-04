@@ -1,0 +1,130 @@
+# Unit 03: Regularity Properties
+#
+# RPG Graph Node: constraint_graph.defs (partial - regularity)
+# Work Package: WP-A
+# Difficulty: 2 (requires handshaking lemma and graph reasoning)
+
+# Metadata
+id: "csp.regularity"
+name: "Regularity Properties"
+work_package: "WP-A"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "ConstraintGraph.Unit03"
+
+# Import context
+imports:
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Fintype.Card"
+  - "Mathlib.Data.Finset.Basic"
+  - "Mathlib.Data.Sym.Sym2"
+  - "PCP.ConstraintGraph.Defs"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.ConstraintGraph.Unit03_Regularity.Slop_Regular"
+
+# Target specification
+spec: |
+  Prove basic properties of d-regular constraint graphs:
+
+  1. regular_iff: G is d-regular iff all vertices have degree d
+  2. regular_degree_eq: If G is d-regular, then degree G v = d for all v
+  3. regular_uniform: In a regular graph, all degrees are equal
+  4. size_bound_regular: For d-regular graph with n vertices, size ≤ d*n/2
+  5. regular_nonempty: A d-regular graph with d > 0 is nonempty
+  6. regular_deg_pos: If G is d-regular with d > 0, all degrees are positive
+
+  Key definitions to use:
+  - IsRegular G d := ∀ v : V, degree G v = d
+  - degree G v = (G.E.filter (fun ec => ∃ u, ec.e = s(v, u))).card
+  - size G = G.E.card
+
+  These lemmas involve:
+  - Unfolding IsRegular definition
+  - Using handshaking lemma (sum of degrees = 2 * size)
+  - Cardinality arithmetic
+  - Basic graph properties
+
+# Constraints
+max_lemmas: 20
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "constraint_graphs"
+  - "graph_theory"
+  - "regularity"
+
+# Expected outputs
+slop_files:
+  - "Slop_Regular.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Properties of d-regular constraint graphs.
+
+  A d-regular CSP has all vertices with degree exactly d, which provides
+  useful structural properties for graph algorithms and analysis.
+
+  Usage:
+  ```lean
+  import PCP.ConstraintGraph.Unit03_Regularity
+
+  example {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
+      (G : BinaryCSP V α) (d : ℕ) (h : BinaryCSP.IsRegular G d) (v : V) :
+      BinaryCSP.degree G v = d :=
+    regular_degree_eq G d h v
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "constraint_graph.defs"
+  - "csp.basic_bounds"
+  - "csp.degree_size"
+
+rpg_dependents:
+  - "constraint_graph.preprocess"
+  - "random_walk.definition"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    1. Definitional unfolding of IsRegular
+    2. Universal quantifier instantiation
+    3. Handshaking lemma applications
+    4. Cardinality bounds
+
+    Create redundant variants:
+    - Both iff and implication forms
+    - Positive degree variants
+    - Size bound variants
+
+  prover: |
+    Expected tactics:
+    - unfold IsRegular, unfold degree
+    - intro v, apply h
+    - rw [h v] for substitution
+    - omega for natural number arithmetic
+    - Finset.sum_const for degree sums
+
+    If stuck, use:
+    - BinaryCSP.sum_degrees_eq_twice_size
+    - Finset.card_filter_le
+
+  failure_analyst: |
+    Common failures:
+    - Missing: handshaking lemma import
+    - Type issues: Nat vs ℕ
+    - Need decidability for edge membership
+
+    Fixes:
+    - Import SimpleGraph.DegreeSum
+    - Use norm_cast for type coercions
+    - Add [DecidableEq V] assumptions

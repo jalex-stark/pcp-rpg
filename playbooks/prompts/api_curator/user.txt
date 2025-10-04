@@ -1,0 +1,21 @@
+From the proven lemmas below, create an `API.lean` that re-exports the useful ones.
+
+Unit namespace: {{NAMESPACE}}
+
+Slop files to import:
+{{SLOP_FILES}}
+
+Proven lemmas (name, statement, file):
+{{INDEX_OF_PROVEN_LEMMAS}}
+
+Module-level guidance:
+{{MODULE_COMMENT}}
+
+Generate the API.lean file with:
+1. Module-level docstring explaining the slop and usage
+2. Imports of slop files
+3. Grouped exports with theme headers
+4. Short docstrings per exported lemma (can improve existing ones)
+5. Use `alias` to rename unintuitive names if needed
+
+Output the complete API.lean file:

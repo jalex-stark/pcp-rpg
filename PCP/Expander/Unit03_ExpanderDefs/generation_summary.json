@@ -1,0 +1,83 @@
+{
+  "unit": "Unit03_ExpanderDefs",
+  "difficulty": 4,
+  "tactic_budget": 7.5,
+  "files_generated": 3,
+  "total_lemmas": 24,
+  "total_axioms": 18,
+  "total_definitions": 6,
+  "files": {
+    "Slop_Combinatorial.lean": {
+      "focus": "Combinatorial expansion definitions",
+      "lemmas": 12,
+      "definitions": 4,
+      "axioms": 0,
+      "key_concepts": [
+        "IsExpander predicate",
+        "vertexExpansionOf",
+        "edgeExpansionOf",
+        "expansionConstant"
+      ],
+      "status": "compiles_with_sorry"
+    },
+    "Slop_Spectral.lean": {
+      "focus": "Spectral gap characterization",
+      "lemmas": 2,
+      "definitions": 1,
+      "axioms": 12,
+      "key_concepts": [
+        "spectralGap",
+        "secondLargestEigenvalue",
+        "Cheeger inequality",
+        "expander mixing lemma"
+      ],
+      "status": "compiles_with_sorry_and_axioms",
+      "note": "Heavy axiomatization due to missing spectral theory in mathlib"
+    },
+    "Slop_Families.lean": {
+      "focus": "Explicit expander family interface",
+      "lemmas": 10,
+      "definitions": 1,
+      "structures": 1,
+      "axioms": 6,
+      "key_concepts": [
+        "ExpanderFamily structure",
+        "IsExplicitFamily",
+        "Ramanujan graphs",
+        "zig-zag product",
+        "explicit constructions"
+      ],
+      "status": "compiles_depends_on_axioms"
+    }
+  },
+  "axioms_added": [
+    "secondLargestEigenvalue",
+    "regular_largest_eigenvalue",
+    "spectralGap_eq_d_minus_lambda2",
+    "spectralGap_le_d",
+    "spectralGap_implies_expansion",
+    "secondLargestEigenvalue_bounds",
+    "spectralGap_zero_iff_disconnected",
+    "cheeger_easy",
+    "cheeger_hard",
+    "rayleigh_characterization",
+    "eigenvalues_real",
+    "expander_mixing_lemma",
+    "constantDegreeExpanderExists",
+    "explicitExpanderExists",
+    "ramanujanGraphsExist",
+    "zigzagProduct",
+    "tensorProduct",
+    "replacementProduct"
+  ],
+  "reasoning": {
+    "why_axioms": "Mathlib4 lacks comprehensive spectral graph theory. Axioms capture key spectral properties (eigenvalues, Cheeger inequality, mixing lemma) and explicit constructions (Ramanujan graphs, zig-zag product) that are foundational but not yet formalized.",
+    "decomposition_strategy": "Split into three orthogonal concerns: (1) combinatorial expansion properties (computable, concrete), (2) spectral characterization (requires linear algebra, axiomatized), (3) explicit families (existence results, axiomatized)",
+    "inhuman_lean_compliance": "All lemmas follow style guide: ≤7.5 tactic budget, explicit type class binders, one-line docstrings, no 'where' clauses, redundancy encouraged"
+  },
+  "next_steps": {
+    "immediate": "Test automated proof completion on lemmas with 'sorry'",
+    "short_term": "Prove or axiomatize Unit01 dependencies that Spectral.lean needs",
+    "long_term": "Replace axioms with actual proofs by extending mathlib's spectral theory"
+  }
+}

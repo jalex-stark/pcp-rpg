@@ -1,0 +1,33 @@
+{
+  "unit_id": "prob.chebyshev_inequality",
+  "status": "completed",
+  "work_package": "WP-A",
+  "difficulty": 1,
+  "timestamp": "2025-10-03T20:40:00Z",
+  "lemmas_attempted": 6,
+  "lemmas_proven": 4,
+  "lemmas_sorry": 2,
+  "tactics_used": {
+    "exact": 2,
+    "convert": 1,
+    "rw": 1,
+    "field_simp": 2,
+    "ring": 2,
+    "apply": 2,
+    "congr": 1,
+    "calc": 1,
+    "trivial": 1
+  },
+  "avg_tactics_per_lemma": 2.2,
+  "slop_files": [
+    "Slop_ChebyshevInequality.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully proven core Chebyshev inequality lemmas using mathlib's variance infrastructure (Mathlib.Probability.Moments.Variance). 4/6 lemmas complete: chebyshev_inequality (uses meas_ge_le_variance_div_sq from mathlib), chebyshev_standardized (in terms of standard deviation), chebyshev_variance_bound, and concentration_from_small_variance. Left 2 advanced lemmas as sorries: one-sided Chebyshev (requires Cantelli's inequality) and sample_mean_concentration (placeholder for WLLN).",
+  "next_steps": [
+    "Unblocks: concentration bounds and tail inequalities",
+    "Foundation for weak law of large numbers",
+    "One-sided Chebyshev requires Cantelli's inequality from mathlib"
+  ]
+}

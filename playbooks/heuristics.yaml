@@ -1,0 +1,337 @@
+# Routing and Resource Allocation Heuristics
+# Maps RPG node properties (work packages, difficulty, domains) to proving strategies
+
+# Global defaults
+defaults:
+  tactic_budget: 5
+  max_lemmas_per_unit: 30
+  retries: 2
+  prover_timeout_secs: 30
+
+# Work Package routing (maps to RPG graph "workPackage" field)
+work_packages:
+  # WP-A: Basic definitions (PCP, CSP, languages)
+  WP-A:
+    description: "Core definitions and basic lemmas"
+    tactic_budget: 4
+    strategies:
+      - name: "definitional"
+        tactics: ["unfold", "simp", "rfl"]
+        weight: 0.4
+      - name: "fintype_computation"
+        tactics: ["decide", "norm_num", "norm_cast"]
+        weight: 0.3
+      - name: "simple_arithmetic"
+        tactics: ["linarith", "omega"]
+        weight: 0.3
+    when_fail:
+      - "add_unfold_lemma"
+      - "add_simp_tag"
+      - "normalize_rationals"
+    notes: "Focus on definitional unfolding and decidability"
+
+  # WP-B: Expander graphs and preprocessing
+  WP-B:
+    description: "Expander graphs, spectral theory, preprocessing"
+    tactic_budget: 5
+    strategies:
+      - name: "graph_theory"
+        tactics: ["simp", "ext", "intro"]
+        weight: 0.3
+      - name: "finset_reasoning"
+        tactics: ["apply Finset.card_*", "rw", "cases"]
+        weight: 0.3
+      - name: "linear_algebra"
+        tactics: ["linarith", "ring_nf"]
+        weight: 0.2
+      - name: "spectral_bounds"
+        tactics: ["apply mul_le_mul", "norm_cast"]
+        weight: 0.2
+    when_fail:
+      - "add_monotonicity_lemma"
+      - "add_bound_helper"
+      - "import_graph_basics"
+      - "add_ext_lemma"
+    notes: "Heavy use of Finset operations and inequalities"
+
+  # WP-C: Graph powering
+  WP-C:
+    description: "Graph powering, path composition"
+    tactic_budget: 5
+    strategies:
+      - name: "inductive_construction"
+        tactics: ["induction", "cases", "constructor"]
+        weight: 0.4
+      - name: "path_composition"
+        tactics: ["simp", "rw", "apply"]
+        weight: 0.3
+      - name: "arithmetic"
+        tactics: ["ring", "linarith"]
+        weight: 0.3
+    when_fail:
+      - "add_base_case_lemma"
+      - "add_inductive_step_lemma"
+      - "simplify_composition"
+    notes: "Inductive proofs on path length"
+
+  # WP-D: Assignment testers
+  WP-D:
+    description: "Assignment testers, alphabet reduction"
+    tactic_budget: 5
+    strategies:
+      - name: "coding_theory"
+        tactics: ["simp", "apply", "intro"]
+        weight: 0.4
+      - name: "probability_bounds"
+        tactics: ["linarith", "apply div_le_div"]
+        weight: 0.3
+      - name: "encoding"
+        tactics: ["unfold", "rw", "cases"]
+        weight: 0.3
+    when_fail:
+      - "add_encoding_lemma"
+      - "add_probability_helper"
+      - "normalize_bounds"
+    notes: "Focus on encoding correctness and probability bounds"
+
+  # WP-E: Main amplification
+  WP-E:
+    description: "Gap amplification loop, convergence"
+    tactic_budget: 6
+    strategies:
+      - name: "iterative_refinement"
+        tactics: ["induction", "apply", "linarith"]
+        weight: 0.5
+      - name: "convergence"
+        tactics: ["apply mul_lt_mul", "linarith"]
+        weight: 0.3
+      - name: "composition"
+        tactics: ["rw", "simp"]
+        weight: 0.2
+    when_fail:
+      - "add_iteration_lemma"
+      - "add_convergence_helper"
+      - "decompose_composition"
+    notes: "Multi-step amplification proofs"
+
+  # WP-F: Endgame (reductions, final theorem)
+  WP-F:
+    description: "PCP ↔ CSP equivalences, NP = PCP(log n, 1)"
+    tactic_budget: 6
+    strategies:
+      - name: "reduction"
+        tactics: ["apply", "refine", "constructor"]
+        weight: 0.4
+      - name: "equivalence"
+        tactics: ["ext", "simp", "intro"]
+        weight: 0.3
+      - name: "composition"
+        tactics: ["rw", "apply"]
+        weight: 0.3
+    when_fail:
+      - "add_direction_lemma"
+      - "add_composition_helper"
+      - "simplify_reduction"
+    notes: "High-level theorem composition"
+
+# Difficulty-based adjustments
+# Multiplies the base tactic_budget from work package
+difficulty_scaling:
+  1:  # Easy
+    tactic_multiplier: 0.8
+    retry_multiplier: 1.0
+    aux_lemma_budget: 1
+  2:  # Medium
+    tactic_multiplier: 1.0
+    retry_multiplier: 1.5
+    aux_lemma_budget: 2
+  3:  # Hard
+    tactic_multiplier: 1.2
+    retry_multiplier: 2.0
+    aux_lemma_budget: 3
+  4:  # Very hard
+    tactic_multiplier: 1.5
+    retry_multiplier: 3.0
+    aux_lemma_budget: 4
+  5:  # Extremely hard
+    tactic_multiplier: 2.0
+    retry_multiplier: 4.0
+    aux_lemma_budget: 5
+
+# Domain-specific tags (inferred from node descriptions)
+domain_tags:
+  constraint_graphs:
+    keywords: ["CSP", "constraint", "satisfaction", "unsat"]
+    extra_imports:
+      - "Mathlib.Data.Finset.Card"
+      - "Mathlib.Data.Fintype.Basic"
+    preferred_tactics: ["unfold", "simp", "apply div_nonneg"]
+
+  expanders:
+    keywords: ["expander", "spectral", "gap", "mixing"]
+    extra_imports:
+      - "Mathlib.LinearAlgebra.Matrix.Spectrum"
+      - "Mathlib.Data.Real.Basic"
+    preferred_tactics: ["apply mul_le_mul", "linarith", "norm_cast"]
+
+  graph_theory:
+    keywords: ["graph", "degree", "edge", "vertex", "path"]
+    extra_imports:
+      - "Mathlib.Combinatorics.SimpleGraph.Basic"
+      - "Mathlib.Combinatorics.SimpleGraph.Degree"
+    preferred_tactics: ["simp", "ext", "apply Finset.card_le_card"]
+
+  coding_theory:
+    keywords: ["code", "distance", "encoding", "alphabet"]
+    extra_imports:
+      - "Mathlib.Data.Vector.Basic"
+      - "Mathlib.Data.Fintype.Card"
+    preferred_tactics: ["unfold", "cases", "decide"]
+
+  arithmetic:
+    keywords: ["bound", "inequality", "ratio", "fraction"]
+    extra_imports:
+      - "Mathlib.Data.Rat.Defs"
+      - "Mathlib.Algebra.Order.Field.Defs"
+    preferred_tactics: ["linarith", "apply div_le_iff", "norm_cast"]
+
+  probability:
+    keywords: ["probability", "expectation", "random"]
+    extra_imports:
+      - "Mathlib.Probability.ProbabilityMassFunction.Basic"
+      - "Mathlib.Data.Real.Basic"
+    preferred_tactics: ["apply div_le_div", "linarith", "norm_num"]
+
+# Escalation policies (what to do when proving fails)
+escalation:
+  add_unfold_lemma:
+    description: "Add a lemma that unfolds a complex definition"
+    max_new_lemmas: 1
+    pattern: "lemma {name}_unfold : {lhs} = {rhs} := rfl"
+
+  add_simp_tag:
+    description: "Mark a definitional lemma with [simp]"
+    pattern: "Add @[simp] attribute to suitable lemmas"
+
+  normalize_rationals:
+    description: "Add normalization lemmas for rational arithmetic"
+    max_new_lemmas: 2
+    tactics: ["norm_cast", "simp [div_nonneg, div_le_iff]"]
+
+  add_monotonicity_lemma:
+    description: "Prove monotonicity of a key function"
+    max_new_lemmas: 2
+    pattern: "lemma {func}_mono : Monotone {func}"
+
+  add_bound_helper:
+    description: "Factor out an inequality into a helper lemma"
+    max_new_lemmas: 2
+    tactics: ["linarith", "apply mul_le_mul"]
+
+  import_graph_basics:
+    description: "Add missing graph theory imports"
+    imports:
+      - "Mathlib.Combinatorics.SimpleGraph.Connectivity"
+      - "Mathlib.Combinatorics.SimpleGraph.Subgraph"
+
+  add_ext_lemma:
+    description: "Add extensionality lemma for graph equality"
+    pattern: "lemma {type}_ext : ∀ x y, (∀ a, x a = y a) → x = y := funext"
+
+  add_base_case_lemma:
+    description: "Factor out base case of induction"
+    max_new_lemmas: 1
+
+  add_inductive_step_lemma:
+    description: "Factor out inductive step"
+    max_new_lemmas: 1
+
+  simplify_composition:
+    description: "Add lemma simplifying composed operations"
+    max_new_lemmas: 2
+
+  add_encoding_lemma:
+    description: "Prove encoding is well-formed"
+    max_new_lemmas: 2
+
+  add_probability_helper:
+    description: "Factor out probability calculation"
+    max_new_lemmas: 2
+
+  normalize_bounds:
+    description: "Add lemmas normalizing bound expressions"
+    max_new_lemmas: 2
+    tactics: ["norm_cast", "apply div_le_one"]
+
+  add_iteration_lemma:
+    description: "Factor out iteration step"
+    max_new_lemmas: 2
+
+  add_convergence_helper:
+    description: "Prove convergence property separately"
+    max_new_lemmas: 2
+
+  decompose_composition:
+    description: "Break composition into separate lemmas"
+    max_new_lemmas: 3
+
+  add_direction_lemma:
+    description: "Prove one direction of equivalence"
+    max_new_lemmas: 2
+
+  add_composition_helper:
+    description: "Factor out reduction composition"
+    max_new_lemmas: 2
+
+  simplify_reduction:
+    description: "Add simplification lemmas for reduction"
+    max_new_lemmas: 2
+
+# Director scoring weights
+# Used by router.py to prioritize which nodes to work on next
+director_scoring:
+  weights:
+    impact: 0.3          # Number of dependent nodes
+    blockers: 0.25       # Inverse of blocking dependencies
+    win_rate: 0.25       # Historical success rate for this domain
+    freshness: 0.15      # Inverse of churn count
+    difficulty: 0.05     # Inverse of difficulty (prefer easier first)
+
+  thresholds:
+    min_win_rate: 0.3        # Below this, escalate aggressively
+    max_churn: 5             # Above this, deprioritize
+    stale_days: 7            # Nodes not touched in N days get freshness penalty
+
+# Prover backends
+provers:
+  copilot:
+    command: "./bin/copilot-prove"
+    timeout: 30
+    suitable_for: ["definitional", "simple_arithmetic", "graph_theory"]
+
+  leandojo:
+    command: "./bin/orch-lean"
+    timeout: 60
+    suitable_for: ["complex_proofs", "inductive_construction"]
+
+  tactics:
+    # Fallback: just try common tactics
+    timeout: 10
+    tactics: ["simp", "linarith", "omega", "decide"]
+
+# Progress tracking
+metrics:
+  record_per_unit:
+    - "lemmas_attempted"
+    - "lemmas_proven"
+    - "avg_tactics_used"
+    - "avg_time_secs"
+    - "error_classes"
+    - "churn_count"
+
+  aggregate:
+    - "win_rate_by_wp"
+    - "win_rate_by_difficulty"
+    - "win_rate_by_domain"
+    - "total_proven"
+    - "total_api_lemmas"

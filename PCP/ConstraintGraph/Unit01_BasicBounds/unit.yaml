@@ -1,0 +1,124 @@
+# Unit 01: Basic Bounds on Satisfaction and UNSAT
+#
+# RPG Graph Node: constraint_graph.defs (partial)
+# Work Package: WP-A
+# Difficulty: 1 (easy definitional lemmas)
+
+# Metadata
+id: "csp.basic_bounds"
+name: "Basic Bounds on Satisfaction"
+work_package: "WP-A"
+difficulty: 1
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "ConstraintGraph.Unit01"
+
+# Import context
+imports:
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Fintype.Card"
+  - "Mathlib.Data.Finset.Basic"
+  - "Mathlib.Data.Rat.Defs"
+  - "Mathlib.Algebra.Order.Field.Defs"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.ConstraintGraph.Unit01.Slop_Bounds"
+
+# Target specification
+spec: |
+  Prove basic bounds for satisfaction and UNSAT values in binary CSPs:
+
+  1. satFrac_nonneg: Satisfaction fraction is non-negative (0 ≤ satFrac G σ)
+  2. satFrac_le_one: Satisfaction fraction is at most one (satFrac G σ ≤ 1)
+  3. satFrac_in_unit: Combined bound (satFrac G σ ∈ [0, 1])
+  4. unsat_nonneg: UNSAT is non-negative (0 ≤ unsat G)
+  5. unsat_le_one: UNSAT is at most one (unsat G ≤ 1)
+  6. unsat_in_unit: Combined bound (unsat G ∈ [0, 1])
+  7. unsat_complement: unsat G = 1 - maxSat G (definitional)
+
+  Key definitions to use:
+  - satFrac G σ = (G.E.filter (EdgeC.sat σ)).card / G.E.card
+  - unsat G = 1 - maxSat G
+
+  All lemmas should be provable with simple rational arithmetic:
+  - Use div_nonneg, div_le_iff₀ for division bounds
+  - Use Finset.card_filter_le for cardinality bounds
+  - Use linarith for linear arithmetic over ℚ
+  - Prefer simpa, rw, apply, unfold tactics
+
+# Constraints
+max_lemmas: 15
+tactic_budget: 4
+
+# Tags for routing
+tags:
+  - "constraint_graphs"
+  - "arithmetic"
+  - "definitional"
+
+# Expected outputs
+slop_files:
+  - "Slop_Bounds.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Basic bounds on satisfaction fractions and UNSAT values.
+  These are foundational lemmas used throughout the PCP formalization.
+
+  Usage:
+  ```lean
+  import PCP.ConstraintGraph.Unit01
+
+  example {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
+      (G : BinaryCSP V α) (σ : Assignment V α) :
+      0 ≤ satFrac G σ ∧ satFrac G σ ≤ 1 :=
+    satFrac_in_unit G σ
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "constraint_graph.defs"  # needs core definitions
+
+rpg_dependents:
+  - "constraint_graph.three_color_np_hard"
+  - "gap_amplification.main"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    1. Definitional unfolding of satFrac and unsat
+    2. Cardinality bounds (filter ≤ original set)
+    3. Rational division properties
+    4. Combining bounds with linarith
+
+    Create redundant variants:
+    - Separate lemmas for each bound
+    - Combined lemmas for both bounds
+    - Variants using different tactics (simpa vs rw+apply)
+
+  prover: |
+    Expected tactics:
+    - unfold satFrac, unfold unsat
+    - apply div_nonneg, norm_cast, simp
+    - apply Finset.card_filter_le
+    - rw [div_le_iff₀], linarith
+
+    If stuck, add aux lemmas for:
+    - G.E.card > 0 (from G.nonempty)
+    - Cardinality casts to ℚ are non-negative
+
+  failure_analyst: |
+    Common failures:
+    - Missing: Mathlib.Algebra.Order.Field.Defs (for div_le_iff₀)
+    - Type mismatch: Need norm_cast for ℕ → ℚ
+    - Unknown lemma: Use div_nonneg, not div_pos
+
+    Fixes:
+    - Add [simp] to card_nonneg lemmas
+    - Insert aux lemma: lemma card_pos_of_nonempty

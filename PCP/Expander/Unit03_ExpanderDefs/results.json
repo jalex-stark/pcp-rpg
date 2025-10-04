@@ -1,0 +1,15 @@
+{
+  "unit_id": "expander.defs",
+  "status": "pending",
+  "lemmas_attempted": 0,
+  "lemmas_proven": 0,
+  "last_updated": null,
+  "metrics": {
+    "avg_tactics_used": 0,
+    "avg_time_secs": 0,
+    "error_classes": [],
+    "churn_count": 0
+  },
+  "slop_files_generated": [],
+  "api_file_generated": false
+}

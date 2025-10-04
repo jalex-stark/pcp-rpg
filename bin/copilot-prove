@@ -1,0 +1,301 @@
+#!/usr/bin/env python3
+"""
+Interactive command-line proof assistant using LeanCopilot.
+
+Usage:
+    ./bin/copilot-prove                    # Interactive mode
+    ./bin/copilot-prove <file> <theorem>   # Prove specific theorem
+    ./bin/copilot-prove --scan             # Find all sorries and try them
+
+Examples:
+    ./bin/copilot-prove PCP/ConstraintGraph/Defs.lean regular_size_bound
+    ./bin/copilot-prove --scan
+"""
+
+import asyncio
+import sys
+import os
+from pathlib import Path
+
+# Add orchestrator to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from orchestrator.workers.copilot_direct import suggest_tactics_direct, search_proof_direct
+from orchestrator.workers.dojo import DojoWrapper
+
+
+COLORS = {
+    'green': '\033[92m',
+    'red': '\033[91m',
+    'blue': '\033[94m',
+    'yellow': '\033[93m',
+    'bold': '\033[1m',
+    'end': '\033[0m',
+}
+
+
+def colorize(text: str, color: str) -> str:
+    """Add ANSI color codes."""
+    return f"{COLORS.get(color, '')}{text}{COLORS['end']}"
+
+
+async def find_theorems_with_sorry(file_path: str) -> list[tuple[str, int]]:
+    """Scan a Lean file for theorems with sorry."""
+    theorems = []
+    with open(file_path) as f:
+        lines = f.readlines()
+
+    current_theorem = None
+    for i, line in enumerate(lines):
+        # Look for theorem/lemma declarations
+        if 'theorem ' in line or 'lemma ' in line:
+            parts = line.split()
+            try:
+                idx = parts.index('theorem') if 'theorem' in parts else parts.index('lemma')
+                if idx + 1 < len(parts):
+                    current_theorem = parts[idx + 1]
+            except (ValueError, IndexError):
+                pass
+
+        # Look for sorry
+        if 'sorry' in line and current_theorem:
+            theorems.append((current_theorem, i + 1))
+            current_theorem = None
+
+    return theorems
+
+
+async def interactive_mode():
+    """Interactive mode: select a file, then select a theorem."""
+    print(colorize("\n🎯 LeanCopilot Interactive Proof Assistant", 'bold'))
+    print(colorize("=" * 50, 'blue'))
+
+    # Find all .lean files with sorry
+    pcp_dir = Path("PCP")
+    lean_files = list(pcp_dir.rglob("*.lean"))
+
+    print(f"\n📁 Found {len(lean_files)} Lean files")
+    print("\nScanning for theorems with 'sorry'...")
+
+    file_theorems = {}
+    for f in lean_files:
+        theorems = await find_theorems_with_sorry(str(f))
+        if theorems:
+            file_theorems[str(f)] = theorems
+
+    if not file_theorems:
+        print(colorize("\n✨ No sorries found! All theorems are proven!", 'green'))
+        return
+
+    # Display files with sorries
+    print(f"\n{colorize('Files with unproven theorems:', 'yellow')}")
+    files = list(file_theorems.keys())
+    for i, f in enumerate(files):
+        count = len(file_theorems[f])
+        print(f"  {i+1}. {f} ({count} theorem{'s' if count > 1 else ''})")
+
+    # Select file
+    while True:
+        try:
+            choice = input(f"\n{colorize('Select file (1-' + str(len(files)) + ', or q to quit): ', 'blue')}")
+            if choice.lower() == 'q':
+                return
+            file_idx = int(choice) - 1
+            if 0 <= file_idx < len(files):
+                break
+            print(colorize("Invalid choice!", 'red'))
+        except ValueError:
+            print(colorize("Invalid input!", 'red'))
+
+    selected_file = files[file_idx]
+    theorems = file_theorems[selected_file]
+
+    # Display theorems
+    print(f"\n{colorize(f'Theorems in {selected_file}:', 'yellow')}")
+    for i, (name, line) in enumerate(theorems):
+        print(f"  {i+1}. {name} (line {line})")
+
+    # Select theorem
+    while True:
+        try:
+            choice = input(f"\n{colorize('Select theorem (1-' + str(len(theorems)) + ', or b for back): ', 'blue')}")
+            if choice.lower() == 'b':
+                await interactive_mode()
+                return
+            thm_idx = int(choice) - 1
+            if 0 <= thm_idx < len(theorems):
+                break
+            print(colorize("Invalid choice!", 'red'))
+        except ValueError:
+            print(colorize("Invalid input!", 'red'))
+
+    theorem_name = theorems[thm_idx][0]
+
+    # Now try to prove it!
+    await prove_theorem(selected_file, theorem_name)
+
+
+async def prove_theorem(file_path: str, theorem_name: str):
+    """Attempt to prove a theorem using LeanCopilot."""
+    print(f"\n{colorize('🤖 Starting LeanCopilot proof search...', 'bold')}")
+    print(f"   File: {file_path}")
+    print(f"   Theorem: {theorem_name}")
+    print()
+
+    try:
+        # First: try quick tactics suggestion
+        print(colorize("1️⃣  Getting tactic suggestions...", 'blue'))
+        suggestions = await suggest_tactics_direct(
+            file_path=file_path,
+            theorem_name=theorem_name,
+            num_suggestions=5,
+            timeout=10.0
+        )
+
+        if suggestions:
+            print(colorize(f"   ✓ Got {len(suggestions)} suggestions:", 'green'))
+            for i, tac in enumerate(suggestions[:5], 1):
+                print(f"      {i}. {tac}")
+        else:
+            print(colorize("   ✗ No suggestions", 'red'))
+
+        # Second: try full proof search
+        print(f"\n{colorize('2️⃣  Running full proof search (beam=4, maxSteps=30)...', 'blue')}")
+        proof = await search_proof_direct(
+            file_path=file_path,
+            theorem_name=theorem_name,
+            beam=4,
+            max_steps=30,
+            timeout=30.0
+        )
+
+        if proof:
+            print(colorize("\n🎉 SUCCESS! Found proof:", 'green'))
+            print(colorize("-" * 50, 'green'))
+            print(proof)
+            print(colorize("-" * 50, 'green'))
+
+            # Ask if user wants to apply it
+            apply = input(f"\n{colorize('Apply this proof to the file? (y/n): ', 'blue')}")
+            if apply.lower() == 'y':
+                await apply_proof(file_path, theorem_name, proof)
+        else:
+            print(colorize("\n😔 No proof found within timeout", 'red'))
+            print(colorize("   Try:", 'yellow'))
+            print(colorize("   - Simplifying the theorem statement", 'yellow'))
+            print(colorize("   - Adding helper lemmas", 'yellow'))
+            print(colorize("   - Using LeanCopilot in VSCode for interactive exploration", 'yellow'))
+
+    except Exception as e:
+        print(colorize(f"\n❌ Error: {e}", 'red'))
+        import traceback
+        traceback.print_exc()
+
+
+async def apply_proof(file_path: str, theorem_name: str, proof: str):
+    """Apply a proof to a theorem in a file."""
+    print(f"\n{colorize('📝 Applying proof...', 'blue')}")
+
+    with open(file_path, 'r') as f:
+        content = f.read()
+
+    # Find the theorem and replace sorry with the proof
+    # This is a simple heuristic - in practice you'd want better parsing
+    lines = content.split('\n')
+    new_lines = []
+    in_theorem = False
+    theorem_indent = 0
+
+    for line in lines:
+        if f'theorem {theorem_name}' in line or f'lemma {theorem_name}' in line:
+            in_theorem = True
+            theorem_indent = len(line) - len(line.lstrip())
+
+        if in_theorem and 'sorry' in line:
+            # Replace sorry with proof
+            indent = ' ' * (theorem_indent + 2)
+            proof_lines = proof.split('\n')
+            new_lines.extend([indent + pl for pl in proof_lines])
+            in_theorem = False
+            continue
+
+        new_lines.append(line)
+
+    # Write back
+    new_content = '\n'.join(new_lines)
+    with open(file_path, 'w') as f:
+        f.write(new_content)
+
+    print(colorize(f"✓ Proof applied to {file_path}", 'green'))
+    print(colorize(f"  Run 'lake build' to verify", 'yellow'))
+
+
+async def scan_mode():
+    """Scan all files and try to prove all sorries."""
+    print(colorize("\n🔍 Scanning mode: Finding and proving all sorries", 'bold'))
+    print(colorize("=" * 50, 'blue'))
+
+    pcp_dir = Path("PCP")
+    lean_files = list(pcp_dir.rglob("*.lean"))
+
+    total_theorems = 0
+    total_proved = 0
+
+    for f in lean_files:
+        theorems = await find_theorems_with_sorry(str(f))
+        if not theorems:
+            continue
+
+        print(f"\n{colorize(f'📄 {f}', 'yellow')}")
+
+        for thm_name, line in theorems:
+            total_theorems += 1
+            print(f"  🎯 {thm_name} (line {line})...", end=' ')
+
+            try:
+                proof = await search_proof_direct(
+                    file_path=str(f),
+                    theorem_name=thm_name,
+                    beam=2,
+                    max_steps=20,
+                    timeout=15.0
+                )
+
+                if proof:
+                    print(colorize("✓ PROVED", 'green'))
+                    total_proved += 1
+                else:
+                    print(colorize("✗ failed", 'red'))
+            except Exception as e:
+                print(colorize(f"✗ error: {e}", 'red'))
+
+    print(f"\n{colorize('=' * 50, 'blue')}")
+    print(f"{colorize('Summary:', 'bold')}")
+    print(f"  Total theorems: {total_theorems}")
+    print(f"  Proved: {colorize(str(total_proved), 'green')}")
+    print(f"  Failed: {colorize(str(total_theorems - total_proved), 'red')}")
+    if total_theorems > 0:
+        pct = (total_proved / total_theorems) * 100
+        print(f"  Success rate: {pct:.1f}%")
+
+
+async def main():
+    """Main entry point."""
+    if len(sys.argv) == 1:
+        # Interactive mode
+        await interactive_mode()
+    elif len(sys.argv) == 2 and sys.argv[1] == '--scan':
+        # Scan mode
+        await scan_mode()
+    elif len(sys.argv) == 3:
+        # Direct mode
+        file_path = sys.argv[1]
+        theorem_name = sys.argv[2]
+        await prove_theorem(file_path, theorem_name)
+    else:
+        print(__doc__)
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    asyncio.run(main())

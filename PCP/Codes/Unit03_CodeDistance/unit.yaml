@@ -1,0 +1,114 @@
+# Unit 03: Code Distance
+#
+# RPG Graph Node: codes.distance
+# Work Package: WP-D
+# Difficulty: 2
+
+# Metadata
+id: "codes.distance"
+name: "Code Distance"
+work_package: "WP-D"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Codes.Unit03"
+
+# Import context
+imports:
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Finset.Card"
+  - "PCP.Codes.Unit01_HammingDistance.API"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Codes.Unit03.Slop_CodeDistance"
+
+# Target specification
+spec: |
+  Define minimum distance of a code.
+
+  For a code C (a set of codewords), the minimum distance is the
+  smallest Hamming distance between any two distinct codewords.
+
+  Goals:
+  1. Define codeDistance for finite codes
+  2. Prove basic properties:
+     - Distance is positive for non-trivial codes
+     - Distance ≤ n (bounded by codeword length)
+     - Singleton codes have undefined/infinite distance
+     - Distance characterizes error detection/correction capability
+  3. Helper lemmas:
+     - Distance and minimum Hamming distance
+     - Relationship to relative distance
+     - Error detection: can detect up to d-1 errors
+     - Error correction: can correct up to ⌊(d-1)/2⌋ errors
+
+# Constraints
+max_lemmas: 12
+tactic_budget: 4
+
+# Tags for routing
+tags:
+  - "coding_theory"
+  - "definitional"
+
+# Expected outputs
+slop_files:
+  - "Slop_CodeDistance.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Minimum distance for codes.
+
+  The minimum distance determines error detection and correction capabilities.
+
+  Usage:
+  ```lean
+  import PCP.Codes.Unit03
+
+  variable {n : ℕ} {α : Type*} [DecidableEq α]
+  variable (C : Finset (Fin n → α))
+
+  -- Define code distance
+  def d := codeDistance C
+
+  -- Distance bounds error correction
+  example (hd : 2 * t + 1 ≤ codeDistance C) :
+      canCorrectErrors C t :=
+    distance_implies_correction C t hd
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "codes.hamming_distance"
+
+rpg_dependents:
+  - "codes.good_codes_exist"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Define as minimum over all pairs of distinct codewords
+    - Use Finset.inf' for finite minimum
+    - Handle edge cases: empty code, singleton code
+    - Prove bounds and characterizations
+
+  prover: |
+    Expected tactics:
+    - unfold codeDistance
+    - apply Finset.le_inf'
+    - simp (for Finset operations)
+    - omega (for arithmetic inequalities)
+    - cases (for pair analysis)
+
+  failure_analyst: |
+    Common issues:
+    - Empty set has no minimum (use Option or ℕ∞)
+    - Singleton set has no pairs (define as ∞ or n+1)
+    - Need Nonempty for inf' to work
+    - Decidability for hammingDist

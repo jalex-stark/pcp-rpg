@@ -1,0 +1,134 @@
+# Unit 02: Degree and Size Properties
+#
+# RPG Graph Node: constraint_graph.defs (partial - degree/size definitions)
+# Work Package: WP-A
+# Difficulty: 2 (requires Sym2 and Finset reasoning)
+
+# Metadata
+id: "csp.degree_size"
+name: "Degree and Size Properties"
+work_package: "WP-A"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "ConstraintGraph.Unit02"
+
+# Import context
+imports:
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Fintype.Card"
+  - "Mathlib.Data.Finset.Basic"
+  - "Mathlib.Data.Sym.Sym2"
+  - "Mathlib.Combinatorics.SimpleGraph.Basic"
+  - "Mathlib.Combinatorics.SimpleGraph.Degree"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.ConstraintGraph.Unit02.Slop_Degree"
+  - "PCP.ConstraintGraph.Unit02.Slop_Size"
+
+# Target specification
+spec: |
+  Prove basic lemmas about degree and size of constraint graphs:
+
+  1. size_pos: A CSP has positive size (0 < size G) from G.nonempty
+  2. size_eq_card: size G = G.E.card (definitional)
+  3. degree_nonneg: Degree is non-negative (0 ≤ degree G v)
+  4. degree_eq_zero_iff: degree G v = 0 ↔ v not incident to any edge
+  5. degree_pos_of_incident: If v is incident to an edge, degree > 0
+  6. incident_edges_subset: Incident edges form a subset of E
+  7. incident_edges_finite: The set of incident edges is finite
+
+  Key definitions to assume:
+  - size G = G.E.card
+  - degree G v = (G.E.filter (fun ec => v ∈ ec.e)).card
+  - incident G v = {ec ∈ G.E | v ∈ ec.e}
+
+  These lemmas involve:
+  - Finset cardinality properties
+  - Sym2 membership (v ∈ s(u,w))
+  - Filter and subset reasoning
+  - Basic arithmetic (Nat, not rationals here)
+
+# Constraints
+max_lemmas: 20
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "constraint_graphs"
+  - "graph_theory"
+  - "finset_reasoning"
+
+# Expected outputs
+slop_files:
+  - "Slop_Degree.lean"
+  - "Slop_Size.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Degree and size properties for constraint graphs.
+
+  These lemmas establish basic facts about the structure of binary CSPs,
+  including vertex degrees and edge counts.
+
+  Usage:
+  ```lean
+  import PCP.ConstraintGraph.Unit02
+
+  example {V α : Type*} [Fintype V] [Fintype α] [DecidableEq V]
+      (G : BinaryCSP V α) :
+      0 < size G :=
+    size_pos G
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "constraint_graph.defs"
+
+rpg_dependents:
+  - "constraint_graph.regular_defs"
+  - "preprocessing.expanderize"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    1. Definitional lemmas (size_eq_card, degree definition)
+    2. Finset.card properties (card_pos, card_eq_zero)
+    3. Filter subsets (Finset.filter_subset)
+    4. Sym2 membership testing
+
+    Create redundant variants:
+    - Separate lemmas for degree = 0, degree > 0
+    - Lemmas about incident edges as a concept
+    - Both iff and implication variants
+
+  prover: |
+    Expected tactics:
+    - unfold size, unfold degree
+    - simp [G.nonempty]
+    - apply Finset.card_pos
+    - rw [Finset.card_eq_zero]
+    - apply Finset.filter_subset
+    - cases (on Sym2 elements)
+    - intro, constructor, exact
+
+    If stuck, add aux lemmas for:
+    - Sym2 membership decidability
+    - Filter nonempty ↔ exists element satisfying predicate
+
+  failure_analyst: |
+    Common failures:
+    - Missing: Mathlib.Data.Sym.Sym2 (for s(u,v) notation)
+    - Type mismatch: Sym2 requires DecidableEq
+    - Unknown: Sym2.mem_iff or similar
+
+    Fixes:
+    - Add aux lemma for Sym2 membership
+    - Use cases on Sym2.exists_other_mem
+    - Import SimpleGraph.Degree for helper lemmas

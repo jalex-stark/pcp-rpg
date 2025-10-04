@@ -1,0 +1,128 @@
+# Unit 03: Operator Norm and Spectral Radius
+#
+# RPG Graph Node: spectral.operator_norm_eigenvalue
+# Work Package: WP-B
+# Difficulty: 2 (requires matrix norms and eigenvalue theory)
+
+# Metadata
+id: "spectral.operator_norm_eigenvalue"
+name: "Operator Norm via Eigenvalues"
+work_package: "WP-B"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Spectral.Unit03"
+
+# Import context
+imports:
+  - "Mathlib.Analysis.Normed.Operator.Basic"
+  - "Mathlib.LinearAlgebra.Matrix.Spectrum"
+  - "Mathlib.Analysis.InnerProductSpace.Basic"
+  - "PCP.Spectral.Unit02_RayleighQuotient.API"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Spectral.Unit03_OperatorNorm.Slop_OperatorNorm"
+
+# Target specification
+spec: |
+  Prove the relationship between operator norm and eigenvalues for symmetric matrices:
+
+  1. spectral_radius_def: Spectral radius is max absolute value of eigenvalues
+  2. operator_norm_le_spectral_radius: ‖A‖ ≤ spectral radius
+  3. spectral_radius_le_operator_norm: spectral radius ≤ ‖A‖
+  4. operator_norm_eq_spectral_radius: For symmetric matrices, ‖A‖ = spectral radius
+  5. operator_norm_nonneg: Operator norm is non-negative
+  6. spectral_radius_nonneg: Spectral radius is non-negative
+  7. operator_norm_symm: Operator norm is well-defined for symmetric matrices
+
+  Key concepts:
+  - Operator norm: ‖A‖ = sup {‖Av‖ / ‖v‖ : v ≠ 0}
+  - Spectral radius: ρ(A) = max {|λ| : λ is eigenvalue of A}
+  - For symmetric real matrices, all eigenvalues are real
+
+  These lemmas involve:
+  - Matrix operator norms
+  - Eigenvalue bounds
+  - Rayleigh quotient characterization
+  - Supremum over unit vectors
+
+# Constraints
+max_lemmas: 15
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "spectral_theory"
+  - "linear_algebra"
+  - "operator_norms"
+
+# Expected outputs
+slop_files:
+  - "Slop_OperatorNorm.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Operator norm and spectral radius for matrices.
+
+  This unit establishes the fundamental theorem that for symmetric matrices,
+  the operator norm equals the spectral radius (maximum absolute eigenvalue).
+
+  Usage:
+  ```lean
+  import PCP.Spectral.Unit03_OperatorNorm
+
+  example (A : Matrix n n ℝ) (hA : A.IsSymm) :
+      ‖A‖ = spectralRadius A :=
+    operator_norm_eq_spectral_radius A hA
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "spectral.adjacency_matrix"
+  - "spectral.rayleigh_quotient"
+
+rpg_dependents:
+  - "spectral.second_eigenvalue_bound"
+  - "random_walk.mixing"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    1. Defining spectral radius as max |λ|
+    2. Using Rayleigh quotient to bound operator norm
+    3. Variational characterization: ‖A‖ = sup_v ⟨Av,v⟩/⟨v,v⟩
+    4. Non-negativity properties
+
+    Create redundant variants:
+    - Both directions of the equality separately
+    - Non-negativity for both norms
+    - Bounds using eigenvalues
+
+  prover: |
+    Expected tactics:
+    - unfold operator norm, spectral radius definitions
+    - use Rayleigh quotient bounds
+    - apply sup/inf lemmas from mathlib
+    - norm properties: norm_nonneg
+
+    If stuck:
+    - Use spectral theorem for symmetric matrices
+    - Extract eigenvalue witnesses
+    - Apply Rayleigh characterization
+
+  failure_analyst: |
+    Common failures:
+    - Missing: Analysis.Normed.Operator imports
+    - Eigenvalue existence (need finite dimension)
+    - Supremum existence issues
+
+    Fixes:
+    - Import mathlib operator norm theory
+    - Use Fintype for finite-dimensional spaces
+    - Use IsROrC for real/complex fields

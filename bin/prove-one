@@ -1,0 +1,113 @@
+#!/bin/bash
+# Simple script to try proving one theorem with LeanCopilot
+#
+# Usage: ./bin/prove-one <file> <theorem>
+# Example: ./bin/prove-one PCP/ConstraintGraph/Defs.lean sum_degrees_eq_twice_size
+
+set -e
+
+FILE="$1"
+THEOREM="$2"
+
+if [ -z "$FILE" ] || [ -z "$THEOREM" ]; then
+    echo "Usage: $0 <file> <theorem>"
+    echo "Example: $0 PCP/ConstraintGraph/Defs.lean sum_degrees_eq_twice_size"
+    exit 1
+fi
+
+echo "🎯 Attempting to prove: $THEOREM in $FILE"
+echo ""
+
+# Create a temporary test file
+TEMP_FILE="${FILE%.lean}_copilot_test.lean"
+
+# Read original file and replace the theorem's proof with search_proof
+echo "📝 Creating temporary file with search_proof..."
+
+python3 -c "
+import re
+import sys
+
+file_path = '$FILE'
+theorem_name = '$THEOREM'
+temp_file = '$TEMP_FILE'
+
+# Read file
+with open(file_path, 'r') as f:
+    content = f.read()
+
+# Add LeanCopilot import if not present
+if 'import LeanCopilot' not in content:
+    lines = content.split('\n')
+    # Find first import
+    for i, line in enumerate(lines):
+        if line.startswith('import '):
+            lines.insert(i+1, 'import LeanCopilot')
+            break
+    content = '\n'.join(lines)
+
+# Replace theorem body with search_proof
+lines = content.split('\n')
+new_lines = []
+in_target = False
+indent = 0
+
+for line in lines:
+    if f'theorem {theorem_name}' in line or f'lemma {theorem_name}' in line:
+        in_target = True
+        indent = len(line) - len(line.lstrip())
+        new_lines.append(line)
+        new_lines.append(' ' * (indent + 2) + 'suggest_tactics')
+        new_lines.append(' ' * (indent + 2) + 'sorry')
+        continue
+
+    if in_target:
+        curr_indent = len(line) - len(line.lstrip()) if line.strip() else indent + 2
+        if curr_indent <= indent and line.strip() and not line.strip().startswith('--'):
+            in_target = False
+            new_lines.append(line)
+    else:
+        new_lines.append(line)
+
+# Write temp file
+with open(temp_file, 'w') as f:
+    f.write('\n'.join(new_lines))
+
+print(f'✓ Temporary file created: {temp_file}')
+"
+
+# Set library path for LeanCopilot
+export DYLD_LIBRARY_PATH=.lake/packages/LeanCopilot/.lake/build/lib:$DYLD_LIBRARY_PATH
+
+echo ""
+echo "🤖 Running LeanCopilot (this may take 30-60 seconds)..."
+echo ""
+
+# Try to build and capture output
+BUILD_OUTPUT=$(lake build "$TEMP_FILE" 2>&1)
+
+# Check for suggestions
+if echo "$BUILD_OUTPUT" | grep -q "Try this:"; then
+    echo "🎉 LeanCopilot found suggestions!"
+    echo ""
+    echo "$BUILD_OUTPUT" | grep -A 2 "Try this:"
+    echo ""
+    echo "💡 These tactics might solve the theorem!"
+    echo "   Apply them manually to $FILE"
+else
+    echo "😔 No suggestions found"
+    echo ""
+    echo "Full output:"
+    echo "$BUILD_OUTPUT" | tail -30
+    echo ""
+    echo "Suggestions:"
+    echo "  - The theorem may be too complex for automated suggestion"
+    echo "  - Try using suggest_tactics interactively in VSCode"
+    echo "  - Break into smaller lemmas"
+fi
+
+# Cleanup
+rm -f "$TEMP_FILE" "${TEMP_FILE%.lean}.olean"
+
+echo ""
+echo "Done!"

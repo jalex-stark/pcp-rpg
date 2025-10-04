@@ -1,0 +1,28 @@
+{
+  "unit_id": "csp.regularity",
+  "status": "completed",
+  "work_package": "WP-A",
+  "difficulty": 2,
+  "timestamp": "2025-10-03T20:35:00Z",
+  "lemmas_attempted": 10,
+  "lemmas_proven": 10,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "rfl": 1,
+    "exact": 5,
+    "rw": 5,
+    "simp": 1
+  },
+  "avg_tactics_per_lemma": 1.2,
+  "slop_files": [
+    "Slop_Regular.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully proven all regularity properties for constraint graphs. 10 lemmas establishing: definitional characterization (regular_iff), uniform degree property, positivity for d > 0, and bidirectional regularity characterization. All proofs are simple definitional unfoldings and substitutions. Clean difficulty 2 unit.",
+  "next_steps": [
+    "Unblocks: constraint_graph.preprocess",
+    "Unblocks: random_walk.definition",
+    "Foundation for regular graph analysis in CSPs"
+  ]
+}

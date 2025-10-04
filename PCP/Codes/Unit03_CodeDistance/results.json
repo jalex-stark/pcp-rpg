@@ -1,0 +1,37 @@
+{
+  "unit_id": "codes.distance",
+  "status": "completed",
+  "work_package": "WP-D",
+  "difficulty": 2,
+  "timestamp": "2025-10-03T20:00:00Z",
+  "lemmas_attempted": 11,
+  "lemmas_proven": 11,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "unfold": 8,
+    "simp": 10,
+    "split_ifs": 3,
+    "rw": 3,
+    "calc": 3,
+    "apply": 5,
+    "omega": 5,
+    "by_contra": 3,
+    "push_neg": 1,
+    "obtain": 5,
+    "use": 2,
+    "intro": 4,
+    "exact": 3,
+    "exfalso": 1
+  },
+  "avg_tactics_per_lemma": 4.7,
+  "slop_files": [
+    "Slop_CodeDistance.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully defined code distance with all fundamental properties. All 11 lemmas proven: minimum distance definition, bounds, characterizations, and applications to error detection/correction. Key results: distance ≤ n+1, error detection for d-1 errors, error correction for ⌊(d-1)/2⌋ errors. Clean difficulty 2 unit.",
+  "next_steps": [
+    "Unblocks: codes.good_codes_exist",
+    "Foundation for Gilbert-Varshamov bound and code existence theorems"
+  ]
+}

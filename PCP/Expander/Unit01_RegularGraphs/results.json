@@ -1,0 +1,39 @@
+{
+  "unit_id": "expander.regular_graphs",
+  "status": "completed",
+  "work_package": "WP-B",
+  "difficulty": 2,
+  "timestamp": "2025-10-03T20:20:00Z",
+  "lemmas_attempted": 34,
+  "lemmas_proven": 34,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "rfl": 7,
+    "exact": 10,
+    "rw": 3,
+    "simp": 7,
+    "intro": 4,
+    "ext": 2,
+    "unfold": 4,
+    "split_ifs": 2,
+    "obtain": 1,
+    "use": 1,
+    "constructor": 1,
+    "simp_rw": 1,
+    "le_refl": 2,
+    "div_nonneg": 2
+  },
+  "avg_tactics_per_lemma": 1.4,
+  "slop_files": [
+    "Slop_Regular.lean",
+    "Slop_Boundary.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully proven all regular graph properties and boundary definitions. 34 lemmas across two slop files: IsRegular definition and properties (14 lemmas), vertex/edge boundaries and expansion ratios (20 lemmas). Key results: regularity uniqueness, sum of degrees formula, boundary characterizations, expansion ratio non-negativity. Fixed 3 initial sorries with simple proofs.",
+  "next_steps": [
+    "Unblocks: expander.spectral_gap",
+    "Unblocks: preprocessing.expanderize",
+    "Foundation for expander graph theory"
+  ]
+}
