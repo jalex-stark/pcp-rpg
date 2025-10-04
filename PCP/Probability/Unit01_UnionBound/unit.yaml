@@ -1,0 +1,122 @@
+# Unit 01: Union Bound
+#
+# RPG Graph Node: prob.union_bound
+# Work Package: WP-A
+# Difficulty: 1
+
+# Metadata
+id: "prob.union_bound"
+name: "Union Bound"
+work_package: "WP-A"
+difficulty: 1
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Probability.Unit01"
+
+# Import context
+imports:
+  - "Mathlib.Probability.ProbabilityMassFunction.Basic"
+  - "Mathlib.Data.Finset.Card"
+  - "Mathlib.Data.Rat.Defs"
+  - "Mathlib.Algebra.BigOperators.Group.Finset"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Probability.Unit01.Slop_UnionBound"
+
+# Target specification
+spec: |
+  Prove the union bound (Boole's inequality) for finite probability spaces.
+
+  Statement: Pr[⋃ᵢ Aᵢ] ≤ ∑ᵢ Pr[Aᵢ]
+
+  The probability of a union of events is at most the sum of their
+  individual probabilities.
+
+  Goals:
+  1. State union bound for finite index sets
+  2. Prove basic version using inclusion-exclusion
+  3. Prove variants:
+     - Union of two events: Pr[A ∪ B] ≤ Pr[A] + Pr[B]
+     - Finite union: Pr[⋃ᵢ∈I Aᵢ] ≤ ∑ᵢ∈I Pr[Aᵢ]
+  4. Corollaries:
+     - If ∑ᵢ Pr[Aᵢ] < 1, then Pr[⋂ᵢ Aᵢᶜ] > 0
+     - Lovász local lemma setup (dependencies for later)
+
+  Note: Should already exist in mathlib - verify and re-export if so.
+
+# Constraints
+max_lemmas: 10
+tactic_budget: 4
+
+# Tags for routing
+tags:
+  - "probability"
+  - "definitional"
+  - "arithmetic"
+
+# Expected outputs
+slop_files:
+  - "Slop_UnionBound.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Union bound (Boole's inequality) for finite probability spaces.
+
+  The union bound states that the probability of a union of events
+  is at most the sum of their individual probabilities.
+
+  Usage:
+  ```lean
+  import PCP.Probability.Unit01
+
+  -- For two events
+  example (p : PMF α) (A B : Set α) :
+      p.toOuterMeasure (A ∪ B) ≤ p.toOuterMeasure A + p.toOuterMeasure B :=
+    union_bound_two p A B
+
+  -- For finite families
+  example (p : PMF α) (I : Finset ι) (A : ι → Set α) :
+      p.toOuterMeasure (⋃ i ∈ I, A i) ≤ ∑ i ∈ I, p.toOuterMeasure (A i) :=
+    union_bound_finset p I A
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies: []
+
+rpg_dependents:
+  - "random_walk.path_sampling"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Use Mathlib's PMF (probability mass function) or Measure
+    - State for finite index sets first
+    - Prove two-event case as base
+    - Induction for finite families
+    - Check if already in mathlib (likely is)
+
+    Design decisions:
+    - May just need to re-export from mathlib
+    - If not in mathlib, use PMF.toOuterMeasure
+    - Work with Finset for finite unions
+
+  prover: |
+    Expected tactics:
+    - induction (on Finset)
+    - simp (for set operations)
+    - apply measure_union_le (if in mathlib)
+    - linarith (for inequalities)
+    - apply Finset.sum_le_sum
+
+  failure_analyst: |
+    Common issues:
+    - Check Mathlib.Probability.* for existing lemmas
+    - May be called "measure_iUnion_le" or similar
+    - Need measurability assumptions
+    - Finite vs countable unions

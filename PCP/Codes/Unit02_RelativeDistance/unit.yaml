@@ -1,0 +1,128 @@
+# Unit 02: Relative Distance
+#
+# RPG Graph Node: codes.relative_distance
+# Work Package: WP-D
+# Difficulty: 1
+
+# Metadata
+id: "codes.relative_distance"
+name: "Relative Distance"
+work_package: "WP-D"
+difficulty: 1
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Codes.Unit02"
+
+# Import context
+imports:
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Rat.Defs"
+  - "PCP.Codes.Unit01_HammingDistance.API"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Codes.Unit02.Slop_RelativeDistance"
+
+# Target specification
+spec: |
+  Define relative (normalized) Hamming distance.
+
+  Signature: `def relativeDistance {n α} [DecidableEq α] (x y : Fin n → α) : ℚ`
+
+  The relative distance is the Hamming distance normalized by vector length:
+  relativeDistance(x,y) = hammingDist(x,y) / n
+
+  Goals:
+  1. Define relativeDistance = hammingDist / n
+  2. Prove basic properties:
+     - 0 ≤ relativeDistance x y ≤ 1 (bounded in [0,1])
+     - relativeDistance x x = 0 (reflexivity)
+     - relativeDistance x y = relativeDistance y x (symmetry)
+     - relativeDistance x y = 0 ↔ x = y (identity)
+     - Triangle inequality (inherited from Hamming)
+  3. Special cases:
+     - relativeDistance = 1 means x and y differ everywhere
+     - Handle n = 0 edge case gracefully
+
+# Constraints
+max_lemmas: 12
+tactic_budget: 4
+
+# Tags for routing
+tags:
+  - "coding_theory"
+  - "definitional"
+  - "arithmetic"
+
+# Expected outputs
+slop_files:
+  - "Slop_RelativeDistance.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Relative (normalized) Hamming distance.
+
+  The relative distance is the Hamming distance divided by vector length,
+  giving a value in [0,1] representing the fraction of differing positions.
+
+  Usage:
+  ```lean
+  import PCP.Codes.Unit02
+
+  variable {n : ℕ} {α : Type*} [DecidableEq α]
+  variable (x y : Fin n → α)
+
+  -- Relative distance is in [0,1]
+  example : 0 ≤ relativeDistance x y ∧ relativeDistance x y ≤ 1 :=
+    relativeDistance_mem_unit_interval x y
+
+  -- Relative distance is symmetric
+  example : relativeDistance x y = relativeDistance y x :=
+    relativeDistance_comm x y
+
+  -- Zero relative distance iff equal
+  example (hn : 0 < n) : relativeDistance x y = 0 ↔ x = y :=
+    relativeDistance_eq_zero_iff x y hn
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "codes.hamming_distance"
+
+rpg_dependents:
+  - "codes.gilbert_varshamov"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Define as (hammingDist x y : ℚ) / n
+    - Handle n = 0 case (define as 0)
+    - Prove bounds: 0 ≤ result ≤ 1
+    - Inherit symmetry, triangle inequality from Hamming
+    - Prove characterizations
+
+    Design decisions:
+    - Use ℚ for division
+    - Cast hammingDist to ℚ before dividing
+    - Define as 0 when n = 0
+
+  prover: |
+    Expected tactics:
+    - unfold relativeDistance
+    - split_ifs (for n = 0 case)
+    - apply div_nonneg, div_le_one
+    - norm_cast (for ℕ → ℚ)
+    - simp (for arithmetic)
+    - exact hammingDist_* (use Hamming distance lemmas)
+
+  failure_analyst: |
+    Common issues:
+    - Division by zero when n = 0
+    - Need to cast ℕ to ℚ properly
+    - Bounds proofs need hammingDist_le_length
+    - Triangle inequality needs careful casting

@@ -1,0 +1,34 @@
+{
+  "unit_id": "expander.edge_expansion_def",
+  "status": "completed",
+  "work_package": "WP-B",
+  "difficulty": 2,
+  "timestamp": "2025-10-03T19:28:00Z",
+  "lemmas_attempted": 15,
+  "lemmas_proven": 15,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "unfold": 8,
+    "simp": 7,
+    "tauto": 2,
+    "apply": 4,
+    "div_nonneg": 2,
+    "split_ifs": 2,
+    "ext": 2,
+    "intro": 2,
+    "use": 1,
+    "obtain": 1
+  },
+  "avg_tactics_per_lemma": 2.0,
+  "slop_files": [
+    "Slop_EdgeExpansion.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully defined edge expansion with Finset-based computable definitions. All 15 lemmas proven. Note: PCP/Expander/Defs.lean already has Set-based versions marked noncomputable. This unit provides a computable alternative with proven properties. Core definitions: edgeBoundary (edges crossing a set), setExpansion (ratio for single set), edgeExpansion (minimum over small sets).",
+  "integration_notes": "Existing PCP/Expander/Defs.lean has Set V-based definitions (lines 60-76). This unit uses Finset V for computability. Consider: (1) Keep both versions for different use cases, or (2) Migrate proven lemmas to enhance Defs.lean.",
+  "next_steps": [
+    "Integrate into PCP.Expander.Defs or keep as standalone computable version",
+    "Unblocks: expander.defs, expander.cheeger, expander.cheeger_easy, expander.cheeger_hard"
+  ]
+}

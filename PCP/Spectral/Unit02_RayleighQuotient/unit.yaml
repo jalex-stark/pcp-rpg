@@ -1,0 +1,135 @@
+# Unit 02: Rayleigh Quotient
+#
+# RPG Graph Node: spectral.rayleigh_quotient
+# Work Package: WP-B
+# Difficulty: 2
+
+# Metadata
+id: "spectral.rayleigh_quotient"
+name: "Rayleigh Quotient"
+work_package: "WP-B"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Spectral.Unit02"
+
+# Import context
+imports:
+  - "Mathlib.Data.Matrix.Basic"
+  - "Mathlib.LinearAlgebra.Matrix.Hermitian"
+  - "Mathlib.Data.Real.Basic"
+  - "Mathlib.Analysis.InnerProductSpace.Basic"
+  - "PCP.Spectral.Unit01_AdjacencyMatrix.API"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Spectral.Unit02.Slop_RayleighQuotient"
+
+# Target specification
+spec: |
+  Define the Rayleigh quotient for characterizing eigenvalues.
+
+  Signature: `def rayleighQuotient (A : Matrix n n ℝ) (v : n → ℝ) : ℝ`
+
+  The Rayleigh quotient R(A, v) = ⟨Av, v⟩ / ⟨v, v⟩ provides bounds
+  on eigenvalues of symmetric matrices.
+
+  Goals:
+  1. Define rayleighQuotient A v = ⟨A *ᵥ v, v⟩ / ⟨v, v⟩
+  2. Prove basic properties:
+     - For symmetric A, R(A, v) is real
+     - λ_min ≤ R(A, v) ≤ λ_max (bounded by eigenvalues)
+     - R(A, eigenvector) = eigenvalue
+     - R(A, cv) = R(A, v) for c ≠ 0 (scale invariance)
+  3. Variational characterization:
+     - λ_max = max_v R(A, v)
+     - λ_min = min_v R(A, v)
+  4. Helper lemmas for spectral bounds
+
+  Reference: Dinur §2 (p. 8)
+
+# Constraints
+max_lemmas: 15
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "linear_algebra"
+  - "spectral"
+  - "definitional"
+
+# Expected outputs
+slop_files:
+  - "Slop_RayleighQuotient.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Rayleigh quotient for spectral analysis.
+
+  The Rayleigh quotient characterizes eigenvalues of symmetric matrices
+  through a variational principle.
+
+  Usage:
+  ```lean
+  import PCP.Spectral.Unit02
+
+  variable {n : Type*} [Fintype n] [DecidableEq n]
+  variable (A : Matrix n n ℝ) (v : n → ℝ)
+
+  -- Define Rayleigh quotient
+  def R := rayleighQuotient A v
+
+  -- Scale invariance
+  example (c : ℝ) (hc : c ≠ 0) :
+      rayleighQuotient A (c • v) = rayleighQuotient A v :=
+    rayleighQuotient_smul A v c hc
+
+  -- Non-negativity for positive semidefinite matrices
+  example (hpos : A.PosSemidef) (hv : v ≠ 0) :
+      0 ≤ rayleighQuotient A v :=
+    rayleighQuotient_nonneg_of_posSemidef A v hpos hv
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "spectral.adjacency_matrix"
+
+rpg_dependents:
+  - "spectral.second_eigenvalue_bound"
+  - "expander.cheeger_hard"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Define using inner product ⟨A *ᵥ v, v⟩ / ⟨v, v⟩
+    - Handle v = 0 case (undefined, or define as 0)
+    - Prove scale invariance
+    - Prove bounds for symmetric matrices
+    - Use Matrix.dotProduct for inner product
+
+    Design decisions:
+    - Use ℝ for real matrices
+    - Define as 0 when v = 0 (or ⟨v, v⟩ = 0)
+    - Leverage mathlib's Matrix.PosSemidef
+
+  prover: |
+    Expected tactics:
+    - unfold rayleighQuotient
+    - simp (for matrix-vector multiplication)
+    - field_simp (for rational expressions)
+    - apply div_nonneg (for non-negativity)
+    - rw [Matrix.dotProduct_mulVec] (for inner product)
+    - ring_nf (for algebraic simplification)
+
+  failure_analyst: |
+    Common issues:
+    - Need v ≠ 0 assumption for well-definedness
+    - Inner product notation: use Matrix.dotProduct
+    - Symmetric matrix condition: Matrix.IsSymm or IsHermitian
+    - Eigenvalue bounds: may need spectral theorem
+    - Scale invariance needs careful field arithmetic

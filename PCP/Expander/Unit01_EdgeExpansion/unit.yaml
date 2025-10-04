@@ -1,0 +1,128 @@
+# Unit 01: Edge Expansion
+#
+# RPG Graph Node: expander.edge_expansion_def
+# Work Package: WP-B
+# Difficulty: 2
+
+# Metadata
+id: "expander.edge_expansion_def"
+name: "Edge Expansion"
+work_package: "WP-B"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Expander.Unit01"
+
+# Import context
+imports:
+  - "Mathlib.Combinatorics.SimpleGraph.Basic"
+  - "Mathlib.Combinatorics.SimpleGraph.Degree"
+  - "Mathlib.Data.Finset.Card"
+  - "Mathlib.Data.Rat.Defs"
+  - "Mathlib.Data.Fintype.Basic"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Expander.Unit01.Slop_EdgeExpansion"
+
+# Target specification
+spec: |
+  Define edge expansion for finite simple graphs.
+
+  Signature: `def edgeExpansion (G : SimpleGraph V) [Fintype V] : ℚ`
+
+  The edge expansion h(G) is the minimum ratio of edges leaving a set S
+  to the size of S, taken over all "small" sets S (|S| ≤ |V|/2).
+
+  Goals:
+  1. Define edge boundary: δ(S) = edges from S to V \ S
+  2. Define expansion of a set: h(S) = |δ(S)| / |S|
+  3. Define edge expansion: h(G) = min_{S: |S|≤n/2, S≠∅} h(S)
+  4. Prove basic properties:
+     - Edge expansion is non-negative
+     - Empty graph has expansion 0
+     - Complete graph has maximal expansion
+     - Expansion relates to minimum degree
+
+  Reference: Dinur Definition 2.1 (p. 7)
+
+# Constraints
+max_lemmas: 20
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "graph_theory"
+  - "expanders"
+  - "definitional"
+  - "combinatorics"
+
+# Expected outputs
+slop_files:
+  - "Slop_EdgeExpansion.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Edge expansion for simple graphs.
+
+  The edge expansion h(G) measures how well-connected a graph is by
+  computing the minimum ratio of boundary edges to set size.
+
+  Usage:
+  ```lean
+  import PCP.Expander.Unit01
+
+  variable {V : Type*} [Fintype V] (G : SimpleGraph V)
+
+  -- Edge expansion is non-negative
+  example : 0 ≤ edgeExpansion G := edgeExpansion_nonneg G
+
+  -- Boundary of a set
+  example (S : Finset V) : edgeBoundary G S =
+    G.edgeSet.filter (fun e => (e.fst ∈ S ∧ e.snd ∉ S) ∨ (e.fst ∉ S ∧ e.snd ∈ S))
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies: []
+
+rpg_dependents:
+  - "expander.defs"
+  - "expander.cheeger"
+  - "expander.cheeger_easy"
+  - "expander.cheeger_hard"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Define edgeBoundary: edges crossing from S to Sᶜ
+    - Define setExpansion: |δ(S)| / |S| for a single set
+    - Define edgeExpansion: minimum over small sets
+    - Handle edge cases: empty set, full set
+    - Use Finset for finite computations
+
+    Key design decisions:
+    - Restrict to sets with |S| ≤ |V|/2 (avoid trivial large sets)
+    - Handle S = ∅ separately (expansion undefined)
+    - Use rational division for expansion ratio
+
+  prover: |
+    Expected tactics:
+    - unfold edgeBoundary, setExpansion, edgeExpansion
+    - simp (for Finset operations)
+    - apply Finset.card_nonneg
+    - apply div_nonneg
+    - cases (for set membership)
+    - split_ifs (for boundary conditions)
+
+  failure_analyst: |
+    Common issues:
+    - Need Fintype V for taking minimum over all sets
+    - Division by zero when |S| = 0 (handle separately)
+    - Decidability for set membership and edge predicates
+    - Symmetric edge representation (undirected graphs)
+    - May need DecidableRel G.Adj

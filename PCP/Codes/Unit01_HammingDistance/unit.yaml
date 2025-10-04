@@ -1,0 +1,139 @@
+# Unit 01: Hamming Distance Properties
+#
+# RPG Graph Node: codes.hamming_distance
+# Work Package: WP-D
+# Difficulty: 1 (easy definitional lemmas)
+
+# Metadata
+id: "codes.hamming_distance"
+name: "Hamming Distance Properties"
+work_package: "WP-D"
+difficulty: 1
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Codes.Unit01"
+
+# Import context
+imports:
+  - "Mathlib.Data.Fintype.Basic"
+  - "Mathlib.Data.Fintype.Card"
+  - "Mathlib.Data.Finset.Basic"
+  - "Mathlib.Data.Rat.Defs"
+  - "Mathlib.Algebra.Order.Field.Defs"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Codes.Unit01.Slop_HammingDistance"
+
+# Target specification
+spec: |
+  Prove basic properties of Hamming distance for vectors over fields:
+
+  1. hammingDistance_def: Definitional unfolding
+  2. hammingDistance_nonneg: Hamming distance is non-negative (always ≥ 0)
+  3. hammingDistance_comm: Symmetry (d(u,v) = d(v,u))
+  4. hammingDistance_self: Distance to self is zero (d(u,u) = 0)
+  5. hammingDistance_eq_zero: Zero distance iff equal vectors
+  6. hammingDistance_le_n: Bounded by vector length
+  7. hammingDistance_pos_of_ne: Positive distance for distinct vectors
+  8. relativeDistance_def: Definitional unfolding
+  9. relativeDistance_nonneg: Relative distance is non-negative
+  10. relativeDistance_le_one: Relative distance is at most 1
+  11. relativeDistance_in_unit: Combined bound (∈ [0,1])
+  12. relativeDistance_comm: Symmetry of relative distance
+  13. relativeDistance_self: Relative distance to self is zero
+  14. relativeDistance_eq_zero: Zero relative distance iff equal vectors
+
+  Key definitions:
+  - hammingDistance u v = (Finset.univ.filter (λ i => u i ≠ v i)).card
+  - relativeDistance u v = hammingDistance u v / n (when n > 0)
+
+  Expected tactics:
+  - unfold hammingDistance, unfold relativeDistance
+  - Finset.card_filter_le for cardinality bounds
+  - ext for function extensionality
+  - split_ifs for case analysis on n = 0
+  - div_nonneg, div_le_iff₀ for rational division
+  - omega for natural number arithmetic
+
+# Constraints
+max_lemmas: 20
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "coding_theory"
+  - "combinatorics"
+  - "definitional"
+
+# Expected outputs
+slop_files:
+  - "Slop_HammingDistance.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Hamming distance properties for error-correcting codes.
+
+  The Hamming distance counts the number of positions where two vectors differ.
+  These lemmas establish basic facts used in linear code theory.
+
+  Usage:
+  ```lean
+  import PCP.Codes.Unit01
+
+  example {F : Type*} [Field F] [DecidableEq F] {n : ℕ} (u v : Fin n → F) :
+      hammingDistance u v = hammingDistance v u :=
+    hammingDistance_comm u v
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies: []
+
+rpg_dependents:
+  - "codes.linear_codes"
+  - "assignment_tester.existence"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    1. Definitional lemmas (def unfolding)
+    2. Symmetry and reflexivity properties
+    3. Bounds (non-negativity, upper bounds)
+    4. Equivalences (distance = 0 ↔ equality)
+
+    Create redundant variants:
+    - Separate lemmas for ≥ 0 and ≤ n bounds
+    - Combined lemmas using both bounds
+    - Both relative and absolute distance versions
+    - Variants with different hypothesis forms
+
+  prover: |
+    Expected tactics:
+    - unfold hammingDistance, unfold relativeDistance
+    - simp [definition]
+    - ext i (for function extensionality)
+    - Finset.card_filter_le
+    - split_ifs (for n = 0 case)
+    - div_nonneg, div_le_iff₀
+    - omega (for Nat arithmetic)
+
+    If stuck, add aux lemmas for:
+    - Filter subset properties
+    - Cardinality of filtered Finsets
+    - Rational division with positive denominators
+
+  failure_analyst: |
+    Common failures:
+    - Missing: DecidableEq F for filter decidability
+    - Type mismatch: Need to cast ℕ → ℚ for division
+    - Unknown: Use Finset.card_filter_le, not manual counting
+
+    Fixes:
+    - Add [DecidableEq F] to lemma signatures
+    - Use div_nonneg for showing division ≥ 0
+    - Use Finset.filter_subset for subset reasoning

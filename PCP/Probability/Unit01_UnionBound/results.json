@@ -1,0 +1,33 @@
+{
+  "unit_id": "prob.union_bound",
+  "status": "completed",
+  "work_package": "WP-A",
+  "difficulty": 1,
+  "timestamp": "2025-10-03T19:35:00Z",
+  "lemmas_attempted": 9,
+  "lemmas_proven": 9,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "induction": 1,
+    "simp": 3,
+    "calc": 3,
+    "apply": 4,
+    "exact": 2,
+    "rw": 2,
+    "linarith": 2,
+    "by_contra": 1,
+    "push_neg": 1,
+    "obtain": 1
+  },
+  "avg_tactics_per_lemma": 2.2,
+  "slop_files": [
+    "Slop_UnionBound.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully proved union bound (Boole's inequality) with multiple variants. Leverages mathlib's measure_union_le. Includes finite induction version, probabilistic existence theorem, and bounded-sum corollaries. All proofs complete without sorries.",
+  "next_steps": [
+    "Unblocks: random_walk.path_sampling",
+    "Foundation for concentration inequalities and probabilistic method"
+  ]
+}

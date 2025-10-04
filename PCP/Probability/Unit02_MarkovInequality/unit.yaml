@@ -1,0 +1,111 @@
+# Unit 02: Markov Inequality
+#
+# RPG Graph Node: prob.markov_inequality
+# Work Package: WP-A
+# Difficulty: 1
+
+# Metadata
+id: "prob.markov_inequality"
+name: "Markov Inequality"
+work_package: "WP-A"
+difficulty: 1
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Probability.Unit02"
+
+# Import context
+imports:
+  - "Mathlib.Probability.ProbabilityMassFunction.Basic"
+  - "Mathlib.MeasureTheory.Measure.MeasureSpace"
+  - "Mathlib.Data.Real.Basic"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Probability.Unit02.Slop_MarkovInequality"
+
+# Target specification
+spec: |
+  Prove Markov's inequality for non-negative random variables.
+
+  Statement: Pr[X ≥ a] ≤ 𝔼[X] / a for a > 0
+
+  Markov's inequality provides a basic tail bound for non-negative
+  random variables.
+
+  Goals:
+  1. State for measure spaces: μ{X ≥ a} ≤ 𝔼[X] / a
+  2. Prove using basic measure theory
+  3. Variants:
+     - Pr[X ≥ t·𝔼[X]] ≤ 1/t
+     - Pr[|X| ≥ a] ≤ 𝔼[|X|] / a
+  4. Special cases and corollaries
+
+  Note: Likely already in mathlib - verify and re-export if so.
+
+# Constraints
+max_lemmas: 8
+tactic_budget: 4
+
+# Tags for routing
+tags:
+  - "probability"
+  - "definitional"
+  - "arithmetic"
+
+# Expected outputs
+slop_files:
+  - "Slop_MarkovInequality.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Markov's inequality for non-negative random variables.
+
+  Provides basic tail bounds: Pr[X ≥ a] ≤ 𝔼[X] / a.
+
+  Usage:
+  ```lean
+  import PCP.Probability.Unit02
+
+  variable {α : Type*} [MeasurableSpace α] (μ : Measure α)
+  variable [IsProbabilityMeasure μ] (X : α → ℝ≥0∞)
+
+  -- Markov's inequality
+  example (a : ℝ≥0∞) (ha : a > 0) :
+      μ {ω | a ≤ X ω} ≤ (∫⁻ ω, X ω ∂μ) / a :=
+    markov_inequality μ X a ha
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies: []
+
+rpg_dependents:
+  - "prob.chebyshev_inequality"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Check if in mathlib (MeasureTheory.*)
+    - Use lintegral (Lebesgue integral) for expectation
+    - Work with ℝ≥0∞ for generality
+    - Prove from definition of expectation
+    - May just re-export from mathlib
+
+  prover: |
+    Expected tactics:
+    - apply (if using mathlib lemma)
+    - unfold lintegral
+    - apply measure_le_lintegral
+    - linarith (for inequalities)
+    - norm_num (for constants)
+
+  failure_analyst: |
+    Common issues:
+    - Check Mathlib.Probability.* namespace
+    - May be called "meas_ge_le_lintegral_div" or similar
+    - Need non-negativity of X
+    - Need a > 0 for division

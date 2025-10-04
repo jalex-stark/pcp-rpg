@@ -1,0 +1,117 @@
+# Unit 01: Adjacency Matrix
+#
+# RPG Graph Node: spectral.adjacency_matrix
+# Work Package: WP-B
+# Difficulty: 2
+
+# Metadata
+id: "spectral.adjacency_matrix"
+name: "Adjacency Matrix"
+work_package: "WP-B"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "Spectral.Unit01"
+
+# Import context
+imports:
+  - "Mathlib.Combinatorics.SimpleGraph.Basic"
+  - "Mathlib.Data.Matrix.Basic"
+  - "Mathlib.Data.Rat.Defs"
+  - "Mathlib.Data.Fintype.Basic"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.Spectral.Unit01.Slop_AdjacencyMatrix"
+
+# Target specification
+spec: |
+  Define the adjacency matrix for finite simple graphs over rationals.
+
+  Signature: `def adjacencyMatrix (G : SimpleGraph V) [Fintype V] : Matrix V V ℚ`
+
+  Goals:
+  1. Define adjacencyMatrix mapping graph G to its V×V rational matrix
+  2. Entry (u,v) = 1 if G.Adj u v, else 0
+  3. Prove basic properties:
+     - Symmetry: adjacencyMatrix G = (adjacencyMatrix G)ᵀ
+     - Diagonal zeros: ∀ v, adjacencyMatrix G v v = 0
+     - Boolean entries: ∀ u v, adjacencyMatrix G u v ∈ {0, 1}
+     - Finite support: matrix is well-formed for Fintype V
+
+# Constraints
+max_lemmas: 20
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "graph_theory"
+  - "linear_algebra"
+  - "definitional"
+  - "spectral"
+
+# Expected outputs
+slop_files:
+  - "Slop_AdjacencyMatrix.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Adjacency matrix representation for simple graphs.
+
+  The adjacency matrix of a graph G is a V×V rational matrix where
+  entry (u,v) is 1 if u and v are adjacent, 0 otherwise.
+
+  Usage:
+  ```lean
+  import PCP.Spectral.Unit01
+
+  variable {V : Type*} [Fintype V] (G : SimpleGraph V)
+
+  example : (adjacencyMatrix G)ᵀ = adjacencyMatrix G :=
+    adjacencyMatrix_symm G
+
+  example (v : V) : adjacencyMatrix G v v = 0 :=
+    adjacencyMatrix_diag_zero G v
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies: []
+
+rpg_dependents:
+  - "spectral.eigenvalues"
+  - "spectral.rayleigh_quotient"
+  - "random_walk.definition"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Clean definition using if-then-else or indicator function
+    - Symmetry property (since SimpleGraph is undirected)
+    - Diagonal property (SimpleGraph is irreflexive: no self-loops)
+    - Binary values property
+
+    Use mathlib's Matrix infrastructure:
+    - Matrix V V ℚ is the type
+    - Matrix.transpose for symmetry
+    - Can define via Matrix.of or direct lambda
+
+  prover: |
+    Expected tactics:
+    - unfold adjacencyMatrix
+    - ext (for matrix equality)
+    - simp (for simplifying if-then-else)
+    - split_ifs (for case analysis on adjacency)
+    - apply SimpleGraph.irrefl (for diagonal zeros)
+    - apply SimpleGraph.symm (for symmetry)
+
+  failure_analyst: |
+    Common issues:
+    - Missing Fintype V instance in context
+    - Confusion between G.Adj and its symmetric closure
+    - Need decidability for G.Adj to use if-then-else
+    - May need DecidableRel G.Adj in definitions

@@ -1,0 +1,35 @@
+{
+  "unit_id": "codes.relative_distance",
+  "status": "completed",
+  "work_package": "WP-D",
+  "difficulty": 1,
+  "timestamp": "2025-10-03T19:38:00Z",
+  "lemmas_attempted": 12,
+  "lemmas_proven": 12,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "unfold": 10,
+    "split_ifs": 6,
+    "simp": 4,
+    "apply": 5,
+    "div_nonneg": 1,
+    "div_le_one": 1,
+    "norm_cast": 4,
+    "field_simp": 2,
+    "rw": 3,
+    "exact": 5,
+    "constructor": 2,
+    "subst": 2
+  },
+  "avg_tactics_per_lemma": 2.5,
+  "slop_files": [
+    "Slop_RelativeDistance.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully defined relative distance with all metric properties. Properly handles n=0 edge case. All 12 lemmas proven: bounds in [0,1], symmetry, reflexivity, identity of indiscernibles, triangle inequality, and characterization of maximum distance. Clean integration with Hamming distance unit.",
+  "next_steps": [
+    "Unblocks: codes.gilbert_varshamov",
+    "Foundation for code distance and rate analysis"
+  ]
+}

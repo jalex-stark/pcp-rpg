@@ -1,0 +1,30 @@
+{
+  "unit_id": "prob.markov_inequality",
+  "status": "completed",
+  "work_package": "WP-A",
+  "difficulty": 1,
+  "timestamp": "2025-10-03T19:50:00Z",
+  "lemmas_attempted": 7,
+  "lemmas_proven": 7,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "apply": 5,
+    "calc": 3,
+    "by_cases": 2,
+    "simp": 3,
+    "rw": 2,
+    "exact": 2,
+    "norm_num": 1
+  },
+  "avg_tactics_per_lemma": 2.6,
+  "slop_files": [
+    "Slop_MarkovInequality.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully re-exported and extended Markov's inequality from mathlib. All 7 lemmas proven: basic form Pr[X≥a]≤E[X]/a, multiplicative form Pr[X≥t·E[X]]≤1/t, absolute value variant, and special cases. Leverages mathlib's meas_ge_le_lintegral_div. Clean difficulty 1 unit.",
+  "next_steps": [
+    "Unblocks: prob.chebyshev_inequality",
+    "Foundation for concentration inequalities and tail bounds"
+  ]
+}

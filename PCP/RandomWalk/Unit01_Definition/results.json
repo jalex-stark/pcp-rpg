@@ -1,0 +1,34 @@
+{
+  "unit_id": "random_walk.definition",
+  "status": "completed",
+  "work_package": "WP-C",
+  "difficulty": 2,
+  "timestamp": "2025-10-03T19:42:00Z",
+  "lemmas_attempted": 17,
+  "lemmas_proven": 17,
+  "lemmas_sorry": 0,
+  "tactics_used": {
+    "unfold": 12,
+    "simp": 8,
+    "field_simp": 2,
+    "calc": 2,
+    "rw": 5,
+    "exact": 4,
+    "apply": 6,
+    "induction": 1,
+    "split_ifs": 3,
+    "norm_cast": 3,
+    "norm_num": 2
+  },
+  "avg_tactics_per_lemma": 2.8,
+  "slop_files": [
+    "Slop_RandomWalk.lean"
+  ],
+  "api_file": "API.lean",
+  "errors": [],
+  "notes": "Successfully defined random walks on d-regular graphs with transition matrix and t-step walk probabilities. All 17 lemmas proven: stochastic property (rows sum to 1), non-negativity, identity at t=0, composition P^(t+s) = P^t * P^s, and inductive non-negativity. Foundation for WP-C (powering analysis) complete.",
+  "next_steps": [
+    "Unblocks: random_walk.mixing, random_walk.spectral_decomposition",
+    "Critical for powering soundness (constraint_graph.powering_soundness)"
+  ]
+}

@@ -1,0 +1,133 @@
+# Unit 01: Random Walk Definition
+#
+# RPG Graph Node: random_walk.definition
+# Work Package: WP-C
+# Difficulty: 2
+
+# Metadata
+id: "random_walk.definition"
+name: "Random Walk on Graph"
+work_package: "WP-C"
+difficulty: 2
+status: "pending"
+
+# Namespace for generated lemmas
+namespace: "RandomWalk.Unit01"
+
+# Import context
+imports:
+  - "Mathlib.Combinatorics.SimpleGraph.Basic"
+  - "Mathlib.Data.Matrix.Basic"
+  - "Mathlib.Data.Rat.Defs"
+  - "Mathlib.Data.Fintype.Basic"
+  - "PCP.Spectral.Matrix"
+
+# Additional imports for API file
+api_imports:
+  - "Mathlib"
+  - "PCP.RandomWalk.Unit01.Slop_RandomWalk"
+
+# Target specification
+spec: |
+  Define random walks on finite regular graphs.
+
+  Signature: `def randomWalk (G : SimpleGraph V) (t : ℕ) : V → V → ℚ`
+
+  For a d-regular graph G, the t-step random walk gives the probability
+  of reaching vertex v from vertex u in exactly t steps by following
+  edges uniformly at random.
+
+  Goals:
+  1. Define transition matrix P: P(u,v) = 1/d if u~v, else 0
+  2. Define t-step walk: P^t
+  3. Prove basic properties:
+     - Row sums are 1 (stochastic matrix)
+     - Entries are non-negative
+     - P^0 = I (identity)
+     - P^(t+1) = P * P^t (composition)
+     - For regular graphs, uniform distribution is stationary
+  4. Helper lemmas for matrix powers
+
+  Reference: Dinur §2.3 (pp. 8-9)
+
+# Constraints
+max_lemmas: 18
+tactic_budget: 5
+
+# Tags for routing
+tags:
+  - "graph_theory"
+  - "probability"
+  - "linear_algebra"
+
+# Expected outputs
+slop_files:
+  - "Slop_RandomWalk.lean"
+
+api_file: "API.lean"
+
+# Module-level comment for API curator
+api_comment: |
+  Random walks on finite graphs.
+
+  For a d-regular graph, a random walk transitions uniformly among neighbors.
+  The t-step walk probability is given by the t-th power of the transition matrix.
+
+  Usage:
+  ```lean
+  import PCP.RandomWalk.Unit01
+
+  variable {V : Type*} [Fintype V] [DecidableEq V]
+  variable (G : SimpleGraph V) [DecidableRel G.Adj]
+
+  -- Define transition matrix
+  def P := transitionMatrix G d
+
+  -- t-step random walk
+  example (t : ℕ) : V → V → ℚ := randomWalk G d t
+
+  -- Row sums equal 1
+  example (u : V) : ∑ v, P u v = 1 := row_sum_one P u
+  ```
+
+# Dependencies in RPG graph
+rpg_dependencies:
+  - "spectral.adjacency_matrix"
+
+rpg_dependents:
+  - "random_walk.mixing"
+  - "random_walk.spectral_decomposition"
+
+# Notes for agents
+agent_hints:
+  decomposer: |
+    Focus on:
+    - Define transitionMatrix for d-regular graphs
+    - P(u,v) = 1/d if adjacent, 0 otherwise
+    - Define randomWalk G t = P^t
+    - Prove stochasticity (rows sum to 1)
+    - Prove P^0 = I
+    - Prove composition P^(t+s) = P^t * P^s
+
+    Design decisions:
+    - Require d-regular graph for uniform transitions
+    - Use Matrix V V ℚ for transition probabilities
+    - Matrix power for t-step walks
+
+  prover: |
+    Expected tactics:
+    - unfold transitionMatrix, randomWalk
+    - simp (for matrix operations)
+    - ext (for matrix equality)
+    - apply Finset.sum_eq_single
+    - split_ifs (for adjacency conditions)
+    - field_simp (for rational arithmetic)
+    - apply IsRegular (for d-regular property)
+
+  failure_analyst: |
+    Common issues:
+    - Need d-regular assumption for row sums
+    - Division by d requires d ≠ 0
+    - Matrix power notation: use ^ or npow
+    - Decidability for adjacency tests
+    - Need ∀ v, Fintype (G.neighborSet v)
