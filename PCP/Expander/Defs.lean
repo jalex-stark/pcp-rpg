@@ -197,7 +197,7 @@ variable [DecidableEq V] [DecidableRel G.Adj]
 /-- The constant vector 1ⁿ is an eigenvector of the Laplacian with eigenvalue 0.
     This proves that 0 is always the smallest eigenvalue. -/
 lemma lapMatrix_mulVec_const_zero :
-    G.lapMatrix ℝ *ᵥ (fun _ => (1 : ℝ)) = 0 := by
+    Matrix.mulVec (G.lapMatrix ℝ) (fun _ => (1 : ℝ)) = 0 := by
   exact SimpleGraph.lapMatrix_mulVec_const_eq_zero G
 
 /-- For a d-regular graph, all Laplacian eigenvalues are in [0, 2d].

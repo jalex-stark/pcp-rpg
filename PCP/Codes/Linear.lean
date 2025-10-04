@@ -10,7 +10,6 @@
 
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Card
-import Mathlib.LinearAlgebra.FiniteDimensional
 import Mathlib.Tactic
 
 /-!

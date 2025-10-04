@@ -3,7 +3,7 @@ import Mathlib.Data.Matrix.Basic
 import Mathlib.Data.Rat.Defs
 import Mathlib.Data.Fintype.Basic
 import PCP.Spectral.Matrix
-
+import LeanCopilot
 namespace Spectral.Unit01
 
 open Matrix SimpleGraph Spectral
@@ -81,7 +81,7 @@ lemma not_adj_of_adjacencyMatrix_eq_zero (u v : V)
   intro hadj
   have : adjacencyMatrix G u v = 1 := adjacencyMatrix_of_adj G u v hadj
   rw [this] at h
-  decide
+  contradiction
 
 /-- Non-zero entry implies adjacency. -/
 lemma adj_of_adjacencyMatrix_ne_zero (u v : V)

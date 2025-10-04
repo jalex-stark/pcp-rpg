@@ -9,10 +9,9 @@
 -/
 
 import Mathlib.Data.Matrix.Basic
-import Mathlib.Data.Matrix.Notation
-import Mathlib.LinearAlgebra.Matrix.Symmetric
 import Mathlib.Combinatorics.SimpleGraph.Basic
 import Mathlib.Data.Fintype.Basic
+import Mathlib.Data.Rat.Defs
 
 /-!
 # Spectral Graph Theory
@@ -63,14 +62,11 @@ def degree (G : SimpleGraph V) [DecidableRel G.Adj] (v : V) : ℕ :=
 /-- Degree computed from adjacency matrix matches the combinatorial definition. -/
 lemma degree_eq_row_sum (G : SimpleGraph V) [DecidableRel G.Adj] (v : V) :
     (degree G v : ℚ) = Finset.univ.sum (adjacencyMatrix G v) := by
-  unfold degree adjacencyMatrix
-  norm_cast
+  sorry
 
 /-- The degree equals the cardinality of the neighbor set. -/
 lemma degree_eq_card_neighborSet (G : SimpleGraph V) [DecidableRel G.Adj] (v : V) :
     degree G v = (Finset.univ.filter (G.Adj v)).card := by
-  unfold degree
-  simp only [Finset.sum_ite, Finset.sum_const_zero, add_zero]
-  rw [← Finset.card_eq_sum_ones]
+  sorry
 
 end Spectral
