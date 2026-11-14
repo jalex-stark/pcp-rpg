@@ -1,0 +1,35 @@
+
+== feistel m=120  (N=20)
+  V verdicts:         {'affine-AI': 20}
+  image-test d=1/d=2: 20 / 20
+  reason degree:      {1: 20}
+  z-image coverage of nonzero values: min 32 median 32.0 max 32  (of 63)
+  knockout survival (frac of single-gate deletions keeping P): median 0.646  mean 0.652
+
+== disguised(feistel), side 60  (N=20)
+  V verdicts:         {'segment': 13, 'affine-AI': 7}
+  image-test d=1/d=2: 7 / 12
+  reason degree:      {1: 7, 2: 5, 3: 6, 4: 2}
+  z-image coverage of nonzero values: min 32 median 46.0 max 60  (of 63)
+  knockout survival (frac of single-gate deletions keeping P): median 0.866  mean 0.869
+
+== natural: random m=80 with P  (N=30)
+  V verdicts:         {'affine-AI': 24, 'reject': 6}
+  image-test d=1/d=2: 24 / 28
+  reason degree:      {1: 24, 2: 4, 3: 2}
+  z-image coverage of nonzero values: min 16 median 32.0 max 56  (of 63)
+  knockout survival (frac of single-gate deletions keeping P): median 0.988  mean 0.982
+
+== natural: random m=120 with P  (N=20)
+  V verdicts:         {'reject': 8, 'affine-AI': 12}
+  image-test d=1/d=2: 12 / 19
+  reason degree:      {1: 12, 2: 7, 3: 1}
+  z-image coverage of nonzero values: min 24 median 32.0 max 56  (of 63)
+  knockout survival (frac of single-gate deletions keeping P): median 0.992  mean 0.988
+
+== ANNEALED m=200 (count 0)  (N=34)
+  V verdicts:         {'reject': 25, 'affine-AI': 9}
+  image-test d=1/d=2: 9 / 14
+  reason degree:      {1: 9, 2: 4, 3: 4, 4: 2, 5: 4, 6: 11}
+  z-image coverage of nonzero values: min 32 median 58.0 max 63  (of 63)
+  knockout survival (frac of single-gate deletions keeping P): median 0.948  mean 0.755

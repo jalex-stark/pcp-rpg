@@ -1,2 +1,4 @@
 /.lake
 .venv-lean/
+experiments/no_coincidence/libcore.so
+experiments/no_coincidence/__pycache__/

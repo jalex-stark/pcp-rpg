@@ -1,0 +1,12 @@
+feistel              | none                       | {'affine-AI': 20}
+feistel              | commutation drift          | {'affine-AI': 20}
+feistel              | pair insert x3 + drift     | {'affine-AI': 20}
+feistel              | swap-relabel x1            | {'affine-AI': 20}
+feistel              | split every gate f=f1^f2   | {'feistel': 20}
+feistel              | split + drift              | {'feistel': 20}
+disguised(feistel)   | none                       | {'affine-AI': 6, 'segment': 14}
+disguised(feistel)   | commutation drift          | {'affine-AI': 6, 'reject': 11, 'segment': 3}
+disguised(feistel)   | pair insert x3 + drift     | {'affine-AI': 6, 'reject': 14}
+disguised(feistel)   | swap-relabel x1            | {'affine-AI': 6, 'reject': 14}
+disguised(feistel)   | split every gate f=f1^f2   | {'affine-AI': 1, 'reject': 19}
+disguised(feistel)   | split + drift              | {'reject': 20}

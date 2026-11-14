@@ -1,0 +1,13 @@
+# run before affine-AI was added to V (V = feistel tester | affine decider | segment type-system)
+random m=200 (soundness)           N= 300  P-holds=   0  ¬P:reject=300  [2s]
+feistel m=120                      N= 100  P-holds= 100  P:feistel=100  [0s]
+affine-P m=80                      N=  50  P-holds=  50  P:affine=50  [0s]
+affine-P + nonlinear cancelling pairs N=  50  P-holds=  50  P:affine=50  [0s]
+disguised(feistel, side=60)        N=  60  P-holds=  60  P:segment=60  [59s]
+disguised(affine, side=60)         N=  50  P-holds=  50  P:segment=50  [50s]
+disguised + 2 pair-insertions      N=  40  P-holds=  40  P:reject=34  P:segment=6  [21s]
+  ... after peephole canonicaliser N=  40  P-holds=  40  P:reject=31  P:segment=9  [37s]
+disguised + 1 swap-relabel         N=  40  P-holds=  40  P:reject=40  [1s]
+  ... after peephole canonicaliser N=  40  P-holds=  40  P:reject=40  [1s]
+
+[exited with code 0]
