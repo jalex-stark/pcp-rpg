@@ -1,2 +1,3 @@
 n=13 m=600 seed 0: final 7517 after 15000 iters [945s]
 n=13 m=600 seed 1: final 7640 after 15000 iters [931s]
+n=13 m=600 seed 2: final 7591 after 15000 iters [846s]

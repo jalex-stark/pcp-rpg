@@ -1,0 +1,6 @@
+seed 0: start 8120 -> final 7517 (ideal random 8192); z-wires constant on sampled reachable set: at 25/50/75/100% depth = 0,0,0,0; max over depth 13; affineAI=False
+   trajectory: [8120, 7749, 7741, 7710, 7619, 7619, 7619, 7611, 7611, 7611, 7600, 7547, 7539, 7539, 7539]
+seed 1: start 8157 -> final 7640 (ideal random 8192); z-wires constant on sampled reachable set: at 25/50/75/100% depth = 0,0,0,0; max over depth 13; affineAI=False
+   trajectory: [8157, 7782, 7752, 7753, 7750, 7695, 7674, 7674, 7671, 7660, 7660, 7647, 7647, 7646, 7646]
+seed 2: start 8081 -> final 7591 (ideal random 8192); z-wires constant on sampled reachable set: at 25/50/75/100% depth = 0,0,0,0; max over depth 12; affineAI=False
+   trajectory: [8081, 7757, 7740, 7697, 7618, 7618, 7618, 7615, 7615, 7615, 7615, 7615, 7615, 7605, 7591]
